@@ -12,43 +12,50 @@ async function sq(table: string, params = '') {
   return res.json()
 }
 
-export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function CityPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [places, setPlaces] = useState<any[]>([])
-  const [cities, setCities] = useState<any[]>([])
-  const [category, setCategory] = useState<any>(null)
-  const [selectedCity, setSelectedCity] = useState('all')
+  const [categories, setCategories] = useState<any[]>([])
+  const [city, setCity] = useState<any>(null)
+  const [selectedCat, setSelectedCat] = useState('all')
   const [openId, setOpenId] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
-      const cats = await sq('categories', `slug=eq.${slug}&limit=1`)
-      const cat = cats[0]
-      if (!cat) return
-      setCategory(cat)
-      const pl = await sq('places', `category_id=eq.${cat.id}&select=*,city:cities(name,slug)&order=is_featured.desc,rating_avg.desc`)
+      const cities = await sq('cities', `slug=eq.${slug}&limit=1`)
+      const c = cities[0]
+      if (!c) return
+      setCity(c)
+      const pl = await sq('places', `city_id=eq.${c.id}&select=*,category:categories(name,slug)&order=is_featured.desc,rating_avg.desc`)
       setPlaces(pl || [])
-      const ct = await sq('cities', 'order=name')
-      setCities(ct || [])
+      const cats = await sq('categories', 'order=name')
+      setCategories(cats || [])
     }
     load()
   }, [slug])
 
-  const filtered = selectedCity === 'all' ? places : places.filter((p: any) => p.city?.slug === selectedCity)
+  const filtered = selectedCat === 'all' ? places : places.filter((p: any) => p.category?.slug === selectedCat)
 
   return (
     <main style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 20px' }}>
       <Link href="/" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none' }}>← Главная</Link>
       <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '2px', margin: '16px 0 4px', textTransform: 'uppercase' }}>
-        {category?.name ?? 'Загрузка...'}
+        {city?.name ?? 'Загрузка...'}
       </h1>
       <p style={{ color: '#94a3b8', marginBottom: '24px' }}>{filtered.length} мест</p>
 
-      <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}
-        style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '14px', marginBottom: '24px', width: '220px' }}>
-        <option value="all">Все города</option>
-        {cities.map((c: any) => <option key={c.id} value={c.slug}>{c.name}</option>)}
-      </select>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        <button onClick={() => setSelectedCat('all')}
+          style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', background: selectedCat === 'all' ? '#1d4ed8' : '#f1f5f9', color: selectedCat === 'all' ? 'white' : '#374151' }}>
+          Все
+        </button>
+        {categories.map((c: any) => (
+          <button key={c.slug} onClick={() => setSelectedCat(c.slug)}
+            style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', background: selectedCat === c.slug ? '#1d4ed8' : '#f1f5f9', color: selectedCat === c.slug ? 'white' : '#374151' }}>
+            {c.name}
+          </button>
+        ))}
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {filtered.map((place: any) => (
@@ -61,7 +68,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: '15px' }}>{place.name}</div>
                 <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                  {place.city?.name}{place.address ? ` · ${place.address}` : ''}
+                  {place.category?.name}{place.address ? ` · ${place.address}` : ''}
                 </div>
               </div>
               {place.rating_avg > 0 && (
@@ -84,7 +91,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           </div>
         ))}
       </div>
-      {filtered.length === 0 && category && (
+      {filtered.length === 0 && city && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏒</div>
           <p>Мест пока нет</p>

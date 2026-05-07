@@ -24,7 +24,7 @@ export default async function HomePage() {
         </p>
         <div style={{display:'flex',justifyContent:'center',gap:'12px',flexWrap:'wrap'}}>
           {cities?.map((city: any) => (
-            <Link key={city.slug} href={`/${city.slug}`} style={{padding:'10px 20px',background:'#1e293b',color:'white',borderRadius:'20px',textDecoration:'none',fontSize:'14px'}}>
+            <Link key={city.slug} href={`/city/${city.slug}`} style={{padding:'10px 20px',background:'#1e293b',color:'white',borderRadius:'20px',textDecoration:'none',fontSize:'14px'}}>
               {city.name}
             </Link>
           ))}
