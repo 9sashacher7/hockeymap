@@ -42,10 +42,10 @@ export default async function HomePage() {
         </h2>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px'}}>
           {categories?.map((cat: any) => (
-            <div key={cat.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer'}}>
+            <Link key={cat.id} href={`/category/${cat.slug}`} style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
               <div style={{fontSize:'24px',marginBottom:'8px'}}>{catEmoji(cat.slug)}</div>
               <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
