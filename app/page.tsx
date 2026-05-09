@@ -88,6 +88,11 @@ export default async function HomePage() {
         <div style={{maxWidth:'560px',margin:'32px auto 0'}}>
           <SearchBar />
         </div>
+              <div style={{textAlign:"center",marginTop:"16px"}}>
+          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
+            + Добавить место
+          </a>
+        </div>
       </section>
 
       {/* Офлайн сервисы */}
@@ -103,6 +108,11 @@ export default async function HomePage() {
               <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
             </Link>
           ))}
+        </div>
+              <div style={{textAlign:"center",marginTop:"16px"}}>
+          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
+            + Добавить место
+          </a>
         </div>
       </section>
 
@@ -120,6 +130,11 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
+              <div style={{textAlign:"center",marginTop:"16px"}}>
+          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
+            + Добавить место
+          </a>
+        </div>
       </section>
 
       {/* Люди и обучение */}
@@ -136,6 +151,11 @@ export default async function HomePage() {
               <div style={{fontSize:'12px',color:'#94a3b8',marginTop:'4px'}}>Скоро</div>
             </Link>
           ))}
+        </div>
+              <div style={{textAlign:"center",marginTop:"16px"}}>
+          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
+            + Добавить место
+          </a>
         </div>
       </section>
     </main>
