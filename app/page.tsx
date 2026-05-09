@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
+import SearchBar from './components/SearchBar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,6 +82,11 @@ export default async function HomePage() {
             <div style={{fontSize:'36px',fontWeight:900}}>{reviewsCount ?? 0}</div>
             <div style={{fontSize:'12px',color:'#64748b',marginTop:'4px'}}>отзывов</div>
           </div>
+        </div>
+
+        {/* Строка поиска */}
+        <div style={{maxWidth:'560px',margin:'32px auto 0'}}>
+          <SearchBar />
         </div>
       </section>
 
