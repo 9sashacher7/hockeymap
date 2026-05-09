@@ -6,9 +6,47 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+function catEmoji(slug: string) {
+  const m: Record<string,string> = {magaziny:'🏪',zatochka:'⚙️',masterskie:'🔧',katki:'🧊'}
+  return m[slug] ?? '📍'
+}
+
+const ONLINE_CATS = [
+  { slug: 'baraholki', name: 'Барахолки', icon: '🔄' },
+  { slug: 'internet-magaziny', name: 'Интернет-магазины', icon: '🛒' },
+  { slug: 'statistika', name: 'Статистика и сервисы', icon: '📊' },
+  { slug: 'avito', name: 'Авито-магазины', icon: '📦' },
+  { slug: 'poleznoe', name: 'Ещё полезное', icon: '⭐' },
+]
+
+const PEOPLE_CATS = [
+  { slug: 'trenery', name: 'Тренеры', icon: '👤' },
+  { slug: 'shkoly', name: 'Хоккейные школы и секции', icon: '🎓' },
+  { slug: 'arenda', name: 'Аренда экипировки', icon: '🏒' },
+]
+
+const FEATURED_CITIES = [
+  'moskva', 'spb', 'ekaterinburg', 'kazan',
+  'novosibirsk', 'omsk', 'ufa', 'perm',
+  'chelyabinsk', 'rostov', 'voronezh', 'volgograd',
+  'krasnodar', 'irkutsk', 'khabarovsk', 'nizhniy-novgorod',
+  'samara', 'saratov'
+]
+
 export default async function HomePage() {
-  const { data: cities } = await supabase.from('cities').select('*').order('name')
-  const { data: categories } = await supabase.from('categories').select('*')
+  const [
+    { data: allCities },
+    { data: categories },
+    { count: placesCount },
+    { count: reviewsCount },
+  ] = await Promise.all([
+    supabase.from('cities').select('*').order('name'),
+    supabase.from('categories').select('*'),
+    supabase.from('places').select('*', { count: 'exact', head: true }),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }),
+  ])
+
+  const featuredCities = allCities?.filter(c => FEATURED_CITIES.includes(c.slug)) ?? []
 
   return (
     <main>
@@ -22,38 +60,78 @@ export default async function HomePage() {
         <p style={{color:'#94a3b8',fontSize:'18px',marginBottom:'40px'}}>
           Магазины, заточки, мастерские — найди нужное в своём городе
         </p>
-        <div style={{display:'flex',justifyContent:'center',gap:'12px',flexWrap:'wrap'}}>
-          {cities?.map((city: any) => (
-            <Link key={city.slug} href={`/city/${city.slug}`} style={{padding:'10px 20px',background:'#1e293b',color:'white',borderRadius:'20px',textDecoration:'none',fontSize:'14px'}}>
+        <div style={{display:'flex',justifyContent:'center',gap:'12px',flexWrap:'wrap',maxWidth:'900px',margin:'0 auto'}}>
+          {featuredCities.map((city: any) => (
+            <Link key={city.slug} href={`/city/${city.slug}`}
+              style={{padding:'10px 20px',background:'#1e293b',color:'white',borderRadius:'20px',textDecoration:'none',fontSize:'14px'}}>
               {city.name}
             </Link>
           ))}
         </div>
         <div style={{display:'flex',justifyContent:'center',gap:'48px',marginTop:'48px'}}>
-          <div><div style={{fontSize:'36px',fontWeight:900}}>340+</div><div style={{color:'#64748b',fontSize:'12px'}}>мест в базе</div></div>
-          <div><div style={{fontSize:'36px',fontWeight:900}}>{cities?.length ?? 0}</div><div style={{color:'#64748b',fontSize:'12px'}}>городов</div></div>
-          <div><div style={{fontSize:'36px',fontWeight:900}}>1200+</div><div style={{color:'#64748b',fontSize:'12px'}}>отзывов</div></div>
+          <div>
+            <div style={{fontSize:'36px',fontWeight:900}}>{placesCount ?? 0}</div>
+            <div style={{fontSize:'12px',color:'#64748b',marginTop:'4px'}}>мест в базе</div>
+          </div>
+          <div>
+            <div style={{fontSize:'36px',fontWeight:900}}>{allCities?.length ?? 0}</div>
+            <div style={{fontSize:'12px',color:'#64748b',marginTop:'4px'}}>городов</div>
+          </div>
+          <div>
+            <div style={{fontSize:'36px',fontWeight:900}}>{reviewsCount ?? 0}</div>
+            <div style={{fontSize:'12px',color:'#64748b',marginTop:'4px'}}>отзывов</div>
+          </div>
         </div>
       </section>
 
-      <section style={{maxWidth:'900px',margin:'0 auto',padding:'48px 20px'}}>
+      {/* Офлайн сервисы */}
+      <section style={{maxWidth:'900px',margin:'0 auto',padding:'48px 20px 24px'}}>
         <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
-          Разделы
+          Офлайн сервисы
         </h2>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px'}}>
           {categories?.map((cat: any) => (
-            <Link key={cat.id} href={`/category/${cat.slug}`} style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
+            <Link key={cat.id} href={`/category/${cat.slug}`}
+              style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
               <div style={{fontSize:'24px',marginBottom:'8px'}}>{catEmoji(cat.slug)}</div>
               <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
             </Link>
           ))}
         </div>
       </section>
+
+      {/* Онлайн сервисы */}
+      <section style={{maxWidth:'900px',margin:'0 auto',padding:'24px 20px'}}>
+        <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
+          Онлайн сервисы
+        </h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px'}}>
+          {ONLINE_CATS.map((cat) => (
+            <Link key={cat.slug} href={`/online/${cat.slug}`}
+              style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
+              <div style={{fontSize:'24px',marginBottom:'8px'}}>{cat.icon}</div>
+              <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Люди и обучение */}
+      <section style={{maxWidth:'900px',margin:'0 auto',padding:'24px 20px 48px'}}>
+        <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
+          Люди и обучение
+        </h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
+          {PEOPLE_CATS.map((cat) => (
+            <Link key={cat.slug} href={`/people/${cat.slug}`}
+              style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block',background:'#f8fafc'}}>
+              <div style={{fontSize:'24px',marginBottom:'8px'}}>{cat.icon}</div>
+              <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
+              <div style={{fontSize:'12px',color:'#94a3b8',marginTop:'4px'}}>Скоро</div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </main>
   )
-}
-
-function catEmoji(slug: string) {
-  const m: Record<string,string> = {magaziny:'🏪',zatochka:'⚙️',masterskie:'🔧',katki:'🧊'}
-  return m[slug] ?? '📍'
 }
