@@ -71,7 +71,7 @@ export default function OnlineCategoryPage() {
               style={{border:'1px solid #e2e8f0',borderRadius:'14px',padding:'20px',textDecoration:'none',color:'inherit',display:'block',background:'white'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px'}}>
                 <div style={{fontWeight:700,fontSize:'16px'}}>{s.name}</div>
-                {s.is_verified && <span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:600,marginLeft:'8px'}}>✓ Проверено</span>}
+                {s.is_verified && <span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'3px 10px',fontSize:'11px',fontWeight:700,marginLeft:'8px',flexShrink:0}}>✓ Проверено</span>}
               </div>
               {s.description && <p style={{fontSize:'13px',color:'#64748b',margin:'0 0 12px',lineHeight:'1.5'}}>{s.description}</p>}
               <div style={{display:'flex',gap:'8px'}}>

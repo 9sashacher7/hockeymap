@@ -33,6 +33,7 @@ export default function AddPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [showCustomCity, setShowCustomCity] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -45,6 +46,7 @@ export default function AddPage() {
     description: '',
     submitter_name: '',
     submitter_contact: '',
+    custom_city: '',
   })
 
   useEffect(() => {
@@ -62,7 +64,8 @@ export default function AddPage() {
     const ok = await post('submissions', {
       ...form,
       category_id: parseInt(form.category_id),
-      city_id: parseInt(form.city_id),
+      city_id: form.city_id && form.city_id !== 'other' ? parseInt(form.city_id) : null,
+      custom_city: form.custom_city || null,
     })
     setLoading(false)
     if (ok) setDone(true)
@@ -88,7 +91,7 @@ export default function AddPage() {
     />
   )
 
-  const isValid = form.name && form.category_id && form.city_id
+  const isValid = form.name && form.category_id && (form.city_id && form.city_id !== 'other' || form.custom_city)
 
   return (
     <main style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
@@ -112,11 +115,17 @@ export default function AddPage() {
           {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <select value={form.city_id} onChange={e => set('city_id', e.target.value)}
+        <select value={form.city_id} onChange={e => {
+            set('city_id', e.target.value)
+            setShowCustomCity(e.target.value === 'other')
+            if (e.target.value !== 'other') set('custom_city', '')
+          }}
           style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none' }}>
           <option value="">Выбери город *</option>
           {cities.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <option value="other">— Моего города нет в списке</option>
         </select>
+        {showCustomCity && input('custom_city', 'Введи название города', true)}
 
         {input('address', 'Адрес')}
         {input('phone', 'Телефон')}

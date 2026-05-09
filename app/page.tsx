@@ -23,7 +23,7 @@ const ONLINE_CATS = [
 const PEOPLE_CATS = [
   { slug: 'trenery', name: 'Тренеры', icon: '👤' },
   { slug: 'shkoly', name: 'Хоккейные школы и секции', icon: '🎓' },
-  { slug: 'arenda', name: 'Аренда экипировки', icon: '🏒' },
+  { slug: 'sbory', name: 'Сборы и лагеря', icon: '📋' },
 ]
 
 const FEATURED_CITIES = [
@@ -88,11 +88,6 @@ export default async function HomePage() {
         <div style={{maxWidth:'560px',margin:'32px auto 0'}}>
           <SearchBar />
         </div>
-              <div style={{textAlign:"center",marginTop:"16px"}}>
-          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
-            + Добавить место
-          </a>
-        </div>
       </section>
 
       {/* Офлайн сервисы */}
@@ -130,9 +125,9 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
-              <div style={{textAlign:"center",marginTop:"16px"}}>
-          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
-            + Добавить место
+        <div style={{textAlign:'center',marginTop:'16px'}}>
+          <a href="/add-online" style={{fontSize:'15px',fontWeight:600,color:'white',textDecoration:'none',background:'#0f4c8a',padding:'12px 28px',borderRadius:'12px',display:'inline-block'}}>
+            + Добавить сервис
           </a>
         </div>
       </section>
@@ -148,13 +143,12 @@ export default async function HomePage() {
               style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block',background:'#f8fafc'}}>
               <div style={{fontSize:'24px',marginBottom:'8px'}}>{cat.icon}</div>
               <div style={{fontWeight:600,fontSize:'14px'}}>{cat.name}</div>
-              <div style={{fontSize:'12px',color:'#94a3b8',marginTop:'4px'}}>Скоро</div>
             </Link>
           ))}
         </div>
-              <div style={{textAlign:"center",marginTop:"16px"}}>
-          <a href="/add" style={{fontSize:"15px",fontWeight:600,color:"white",textDecoration:"none",background:"#0f4c8a",padding:"12px 28px",borderRadius:"12px",display:"inline-block"}}>
-            + Добавить место
+        <div style={{textAlign:'center',marginTop:'16px'}}>
+          <a href="/add-people" style={{fontSize:'15px',fontWeight:600,color:'white',textDecoration:'none',background:'#0f4c8a',padding:'12px 28px',borderRadius:'12px',display:'inline-block'}}>
+            + Добавить карточку
           </a>
         </div>
       </section>
