@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([])
   const [cities, setCities] = useState([])
   const [categories, setCategories] = useState([])
+  const [reviewsTab, setReviewsTab] = useState('coaches')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [offCat, setOffCat] = useState('')
@@ -107,7 +108,7 @@ export default function AdminPage() {
       sq('hockey_schools', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
       sq('hockey_camps', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
       sq('featured_history', 'order=created_at.desc&limit=50'),
-      sq('reviews', 'select=id,author_name,rating,text,created_at,place_id,place:places(name)&order=created_at.desc'),
+      sq('reviews', 'select=id,author_name,rating,text,created_at,is_approved,place_id,coach_id,school_id,camp_id,place:places(name),coach:coaches(name)&order=created_at.desc'),
     ])
     setSubmissions(Array.isArray(subs) ? subs : [])
     setOnlineSubmissions(Array.isArray(onlineSubs) ? onlineSubs : [])
@@ -183,7 +184,7 @@ export default function AdminPage() {
     }
     const slug = slugify(sub.name) + '-' + sub.id
     let table = 'coaches'
-    let data = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, phone: sub.phone||null, telegram: sub.telegram||null, description: sub.description||null, is_verified: true, is_featured: false }
+    let data = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, description: sub.description||null, is_verified: true, is_featured: false }
     if (sub.type === 'school') {
       table = 'hockey_schools'
       data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
@@ -202,6 +203,14 @@ export default function AdminPage() {
     setLoading(true)
     await sbDelete(table, sub.id)
     setMessage('Удалено'); loadData(); setLoading(false)
+  }
+
+  async function approveReview(r) {
+    setLoading(true)
+    await sbPatch('reviews', r.id, { is_approved: true })
+    setReviews(prev => prev.map(x => x.id===r.id ? {...x, is_approved:true} : x))
+    setMessage('Отзыв одобрен')
+    setLoading(false)
   }
 
   async function deleteReview(r) {
@@ -311,7 +320,7 @@ export default function AdminPage() {
     {key:'people',label:'Люди и обучение ('+peopleSubmissions.length+')',color:'#0891b2'},
     {key:'top',label:'Топ',color:'#f59e0b'},
     {key:'verified',label:'Проверено',color:'#16a34a'},
-    {key:'reviews',label:'Отзывы ('+reviews.length+')',color:'#7c3aed'},
+    {key:'reviews',label:'Отзывы ('+reviews.filter(r=>!r.is_approved).length+')',color:'#7c3aed'},
   ]
 
   if (!auth) return (
@@ -647,21 +656,41 @@ export default function AdminPage() {
 
       {tab==='reviews'&&(
         <div>
-          {reviews.length===0
+          <div style={{display:'flex',gap:'8px',marginBottom:'24px',flexWrap:'wrap'}}>
+            {[['coaches','Тренеры'],['places','Офлайн сервисы']].map(([t,l])=>(
+              <button key={t} onClick={()=>setReviewsTab(t)}
+                style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:reviewsTab===t?'#7c3aed':'#f1f5f9',color:reviewsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>
+                {l} ({reviews.filter(r=>t==='coaches'?!!r.coach_id:!!r.place_id).length})
+              </button>
+            ))}
+          </div>
+
+          {reviews.filter(r=>reviewsTab==='coaches'?!!r.coach_id:!!r.place_id).length===0
             ? <div style={{textAlign:'center',color:'#94a3b8',padding:'80px 0'}}>Отзывов нет</div>
-            : reviews.map(r=>(
-              <div key={r.id} style={{border:'1px solid #e2e8f0',borderRadius:'14px',padding:'20px',background:'white',marginBottom:'12px'}}>
+            : reviews.filter(r=>reviewsTab==='coaches'?!!r.coach_id:!!r.place_id).map(r=>(
+              <div key={r.id} style={{border:'1px solid '+(r.is_approved?'#e2e8f0':'#fde68a'),borderRadius:'14px',padding:'20px',background:r.is_approved?'white':'#fffbeb',marginBottom:'12px'}}>
+                {!r.is_approved&&<div style={{fontSize:'12px',fontWeight:600,color:'#92400e',marginBottom:'8px'}}>⏳ Ожидает одобрения</div>}
                 <div style={{display:'flex',justifyContent:'space-between',gap:'16px'}}>
                   <div style={{flex:1}}>
-                    <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'8px'}}>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'8px',flexWrap:'wrap'}}>
                       <span style={{fontWeight:700}}>{r.author_name||'Аноним'}</span>
                       <span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'12px',fontWeight:600}}>{'★'.repeat(r.rating)} {r.rating}/5</span>
                     </div>
-                    {r.place&&<div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'6px'}}>📍 {r.place.name}</div>}
+                    {reviewsTab==='coaches'&&r.coach&&<div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'6px'}}>Тренер: {r.coach.name}</div>}
+                    {reviewsTab==='places'&&r.place&&<div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'6px'}}>📍 {r.place.name}</div>}
                     {r.text&&<div style={{fontSize:'14px',color:'#475569'}}>{r.text}</div>}
                     <div style={{fontSize:'11px',color:'#cbd5e1',marginTop:'8px'}}>{new Date(r.created_at).toLocaleString('ru-RU')}</div>
                   </div>
-                  <button onClick={()=>deleteReview(r)} disabled={loading} style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',color:'#dc2626',fontWeight:600,fontSize:'13px',cursor:'pointer',flexShrink:0}}>Удалить</button>
+                  <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
+                    {!r.is_approved&&<button onClick={()=>approveReview(r)} disabled={loading}
+                      style={{padding:'8px 16px',borderRadius:'10px',border:'none',background:'#16a34a',color:'white',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                      ✓ Одобрить
+                    </button>}
+                    <button onClick={()=>deleteReview(r)} disabled={loading}
+                      style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',color:'#dc2626',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                      Удалить
+                    </button>
+                  </div>
                 </div>
               </div>
             ))

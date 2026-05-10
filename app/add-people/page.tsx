@@ -46,6 +46,7 @@ export default function AddPeoplePage() {
     phone: '',
     telegram: '',
     website: '',
+    price_per_hour: '',
     address: '',
     description: '',
     submitter_name: '',
@@ -83,7 +84,7 @@ export default function AddPeoplePage() {
     />
   )
 
-  const isValid = form.type && form.name && (form.city_id && form.city_id !== 'other' || form.custom_city)
+  const isValid = form.type && form.name && (form.city_id && form.city_id !== 'other' || form.custom_city) && (form.type !== 'coach' || form.price_per_hour)
 
   if (done) return (
     <main style={{maxWidth:'600px',margin:'0 auto',padding:'80px 20px',textAlign:'center'}}>
@@ -128,6 +129,7 @@ export default function AddPeoplePage() {
           {form.type==='coach' && <>
             {inp('specialization', 'Специализация (например: вратари, нападающие, все возрасты)')}
             {inp('experience', 'Опыт (например: 10 лет, КМС)')}
+          {inp('price_per_hour', 'Цена за час (руб)', true)}
           </>}
 
           {(form.type==='school'||form.type==='camp') && (
@@ -154,7 +156,7 @@ export default function AddPeoplePage() {
 
           {inp('address', 'Адрес')}
           {inp('phone', 'Телефон')}
-          {inp('telegram', 'Социальные сети (Telegram, ВКонтакте, Instagram)')}
+          {inp('telegram', 'Telegram — @username или ссылка t.me/username (для кнопки Написать)')}
           {inp('website', 'Сайт')}
 
           <textarea placeholder="Описание" value={form.description} onChange={e=>set('description',e.target.value)} rows={3}

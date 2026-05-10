@@ -91,6 +91,19 @@ export default function AddOnlinePage() {
         </select>
 
         {input('url', 'Ссылка (сайт, Telegram, Авито)', true)}
+        {form.category_slug === 'avito' && <>
+          {input('city', 'Город магазина')}
+          <select value={form.specialization} onChange={e => set('specialization', e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+            <option value="">Специализация (что продаёте)</option>
+            <option value="Всё подряд">Всё подряд</option>
+            <option value="Коньки">Коньки</option>
+            <option value="Клюшки">Клюшки</option>
+            <option value="Форма и защита">Форма и защита</option>
+            <option value="Вратарское">Вратарское</option>
+            <option value="Детское">Детское</option>
+          </select>
+        </>}
 
         <textarea
           placeholder="Описание — чем полезен сервис"

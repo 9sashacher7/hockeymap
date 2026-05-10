@@ -13,10 +13,180 @@ async function sq(table, params = '') {
   return res.json()
 }
 
+async function sbPost(table, data) {
+  const res = await fetch(`${SURL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(data)
+  })
+  return res.ok
+}
+
 const CAT_INFO = {
-  'trenery':  { name: 'Тренеры', icon: '👤', description: 'Частные тренеры по хоккею', table: 'coaches' },
-  'shkoly':   { name: 'Хоккейные школы и секции', icon: '🎓', description: 'Школы и секции для детей и взрослых', table: 'hockey_schools' },
-  'sbory':    { name: 'Сборы и лагеря', icon: '📋', description: 'Хоккейные сборы и летние лагеря', table: 'hockey_camps' },
+  'trenery':  { name: 'Тренеры', icon: '👤', description: 'Частные тренеры по хоккею', table: 'coaches', idField: 'coach_id' },
+  'shkoly':   { name: 'Хоккейные школы и секции', icon: '🎓', description: 'Школы и секции для детей и взрослых', table: 'hockey_schools', idField: 'school_id' },
+  'sbory':    { name: 'Сборы и лагеря', icon: '📋', description: 'Хоккейные сборы и летние лагеря', table: 'hockey_camps', idField: 'camp_id' },
+}
+
+function getInitials(name) {
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
+}
+
+function Avatar({ name, verified }) {
+  const colors = ['#1d4ed8','#0891b2','#16a34a','#7c3aed','#dc2626','#d97706']
+  const color = colors[name.charCodeAt(0) % colors.length]
+  return (
+    <div style={{width:'56px',height:'56px',borderRadius:'50%',background:color,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:800,fontSize:'18px',flexShrink:0,position:'relative'}}>
+      {getInitials(name)}
+      {verified && <div style={{position:'absolute',bottom:0,right:0,width:'18px',height:'18px',background:'#16a34a',borderRadius:'50%',border:'2px solid white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px'}}>✓</div>}
+    </div>
+  )
+}
+
+function Stars({ rating, size = 16, interactive = false, onSelect }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div style={{display:'flex',gap:'2px'}}>
+      {[1,2,3,4,5].map(i => (
+        <span key={i}
+          onClick={()=>interactive&&onSelect&&onSelect(i)}
+          onMouseEnter={()=>interactive&&setHover(i)}
+          onMouseLeave={()=>interactive&&setHover(0)}
+          style={{fontSize:size+'px',cursor:interactive?'pointer':'default',color:(hover||rating)>=i?'#f59e0b':'#e2e8f0'}}>
+          ★
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function ReviewForm({ itemId, idField, onSuccess }) {
+  const [name, setName] = useState('')
+  const [rating, setRating] = useState(0)
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function submit() {
+    if (!name || !rating) return
+    setLoading(true)
+    const ok = await sbPost('reviews', {
+      author_name: name,
+      rating,
+      text: text || null,
+      [idField]: itemId,
+    })
+    if (ok) { setDone(true); onSuccess() }
+    setLoading(false)
+  }
+
+  if (done) return <div style={{padding:'12px',background:'#f0fdf4',borderRadius:'10px',fontSize:'14px',color:'#16a34a',textAlign:'center'}}>✓ Отзыв опубликован!</div>
+
+  return (
+    <div style={{padding:'16px',background:'#f8fafc',borderRadius:'12px',marginTop:'12px'}}>
+      <div style={{fontWeight:600,fontSize:'14px',marginBottom:'12px'}}>Оставить отзыв</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        <input placeholder="Ваше имя *" value={name} onChange={e=>setName(e.target.value)}
+          style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}} />
+        <div>
+          <div style={{fontSize:'12px',color:'#64748b',marginBottom:'6px'}}>Оценка *</div>
+          <Stars rating={rating} size={28} interactive onSelect={setRating} />
+        </div>
+        <textarea placeholder="Комментарий (необязательно)" value={text} onChange={e=>setText(e.target.value)} rows={3}
+          style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none',resize:'none'}} />
+        <button onClick={submit} disabled={!name||!rating||loading}
+          style={{padding:'10px',borderRadius:'10px',border:'none',background:name&&rating?'#1d4ed8':'#e2e8f0',color:name&&rating?'white':'#94a3b8',fontWeight:600,fontSize:'14px',cursor:name&&rating?'pointer':'default'}}>
+          {loading?'Отправляем...':'Опубликовать'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ItemCard({ item, idField, cat }) {
+  const [reviews, setReviews] = useState([])
+  const [showReviews, setShowReviews] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+
+  async function loadReviews() {
+    const data = await sq('reviews', `${idField}=eq.${item.id}&is_approved=eq.true&order=created_at.desc`)
+    setReviews(Array.isArray(data) ? data : [])
+  }
+
+  useEffect(() => { loadReviews() }, [item.id])
+
+  const avgRating = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
+
+  return (
+    <div style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0')}}>
+      <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
+        <Avatar name={item.name} verified={item.is_verified} />
+        <div style={{flex:1}}>
+          <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'6px',flexWrap:'wrap'}}>
+            <span style={{fontWeight:800,fontSize:'18px'}}>{item.name}</span>
+            {item.is_featured&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>⭐ Топ</span>}
+            {item.is_verified&&<span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>✓ Проверено</span>}
+            {avgRating&&(
+              <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                <span style={{color:'#f59e0b',fontSize:'14px'}}>★</span>
+                <span style={{fontWeight:700,fontSize:'14px'}}>{avgRating}</span>
+                <span style={{fontSize:'12px',color:'#94a3b8'}}>({reviews.length})</span>
+              </div>
+            )}
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'8px'}}>
+            {item.city&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Город:</span> {item.city.name}</div>}
+            {item.specialization&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Специализация:</span> {item.specialization}</div>}
+            {item.experience&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Опыт:</span> {item.experience}</div>}
+            {item.price_per_hour&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Цена:</span> <span style={{fontWeight:800,color:'#1d4ed8'}}>{parseInt(item.price_per_hour).toLocaleString('ru-RU')} руб/час</span></div>}
+            {item.age_from&&item.age_to&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Возраст:</span> {item.age_from}–{item.age_to} лет</div>}
+            {item.camp_type&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Тип:</span> {item.camp_type}</div>}
+            {item.dates&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Даты:</span> {item.dates}</div>}
+            {item.address&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Адрес:</span> {item.address}</div>}
+            {item.description&&<div style={{fontSize:'13px',color:'#64748b',marginTop:'4px'}}><span style={{fontWeight:700,color:'#0f172a'}}>О себе:</span> {item.description}</div>}
+          </div>
+
+          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
+            {reviews.length>0&&(
+              <button onClick={()=>setShowReviews(!showReviews)}
+                style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#475569'}}>
+                {showReviews?'Скрыть отзывы':'Отзывы ('+reviews.length+')'}
+              </button>
+            )}
+            <button onClick={()=>setShowForm(!showForm)}
+              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #1d4ed8',background:showForm?'#1d4ed8':'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:showForm?'white':'#1d4ed8'}}>
+              {showForm?'Отмена':'+ Отзыв'}
+            </button>
+          </div>
+
+          {showReviews&&reviews.length>0&&(
+            <div style={{marginTop:'12px',display:'flex',flexDirection:'column',gap:'8px'}}>
+              {reviews.map(r=>(
+                <div key={r.id} style={{padding:'12px',background:'#f8fafc',borderRadius:'10px'}}>
+                  <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'4px'}}>
+                    <span style={{fontWeight:600,fontSize:'13px'}}>{r.author_name}</span>
+                    <Stars rating={r.rating} size={13} />
+                    <span style={{fontSize:'11px',color:'#94a3b8',marginLeft:'auto'}}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
+                  </div>
+                  {r.text&&<div style={{fontSize:'13px',color:'#475569'}}>{r.text}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showForm&&<ReviewForm itemId={item.id} idField={idField} onSuccess={()=>{loadReviews();setShowForm(false);setShowReviews(true)}} />}
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
+          {item.phone&&<a href={'tel:'+item.phone} style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>📞 Позвонить</a>}
+          {item.telegram&&<a href={item.telegram.startsWith('http')?item.telegram:'https://t.me/'+item.telegram.replace('@','')} target="_blank" rel="noreferrer"
+            style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>💬 Написать</a>}
+          {item.website&&<a href={item.website} target="_blank" rel="noreferrer"
+            style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>🌐 Сайт</a>}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function PeopleCategoryPage() {
@@ -27,6 +197,9 @@ export default function PeopleCategoryPage() {
   const [cities, setCities] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCity, setSelectedCity] = useState('')
+  const [selectedSpec, setSelectedSpec] = useState('')
+  const [selectedPrice, setSelectedPrice] = useState('')
+  const [searchName, setSearchName] = useState('')
 
   useEffect(() => {
     if (!cat) return
@@ -42,13 +215,29 @@ export default function PeopleCategoryPage() {
 
   if (!cat) return (
     <main style={{maxWidth:'800px',margin:'0 auto',padding:'80px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}>🏒</div>
       <h1 style={{fontSize:'24px',fontWeight:700}}>Раздел не найден</h1>
       <Link href="/" style={{color:'#1d4ed8',textDecoration:'none',marginTop:'16px',display:'inline-block'}}>← На главную</Link>
     </main>
   )
 
-  const filtered = selectedCity ? items.filter(i => String(i.city_id) === selectedCity) : items
+  const specs = [...new Set(items.filter(i=>i.specialization).map(i=>i.specialization))]
+  const verifiedCount = items.filter(i=>i.is_verified).length
+  const cityCount = [...new Set(items.filter(i=>i.city_id).map(i=>i.city_id))].length
+
+  let filtered = items
+  if (searchName) filtered = filtered.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase()))
+  if (selectedCity) filtered = filtered.filter(i => String(i.city_id) === selectedCity)
+  if (selectedSpec) filtered = filtered.filter(i => i.specialization === selectedSpec)
+  if (selectedPrice && slug === 'trenery') {
+    filtered = filtered.filter(i => {
+      const p = parseInt(i.price_per_hour)
+      if (!p) return false
+      if (selectedPrice === 'low') return p <= 1500
+      if (selectedPrice === 'mid') return p > 1500 && p <= 3000
+      if (selectedPrice === 'high') return p > 3000
+      return true
+    })
+  }
 
   return (
     <main style={{maxWidth:'900px',margin:'0 auto',padding:'40px 20px'}}>
@@ -56,60 +245,72 @@ export default function PeopleCategoryPage() {
       <div style={{margin:'24px 0 32px'}}>
         <div style={{fontSize:'40px',marginBottom:'12px'}}>{cat.icon}</div>
         <h1 style={{fontSize:'32px',fontWeight:900,marginBottom:'8px'}}>{cat.name}</h1>
-        <p style={{color:'#64748b',fontSize:'15px'}}>{cat.description}</p>
+        <p style={{color:'#64748b',fontSize:'15px',marginBottom:'16px'}}>{cat.description}</p>
+        {!loading&&items.length>0&&(
+          <div style={{display:'flex',gap:'16px',flexWrap:'wrap'}}>
+            <div style={{background:'#eff6ff',borderRadius:'10px',padding:'10px 18px',textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:800,color:'#1d4ed8'}}>{items.length}</div>
+              <div style={{fontSize:'12px',color:'#64748b'}}>тренеров</div>
+            </div>
+            <div style={{background:'#f0fdf4',borderRadius:'10px',padding:'10px 18px',textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:800,color:'#16a34a'}}>{verifiedCount}</div>
+              <div style={{fontSize:'12px',color:'#64748b'}}>проверено</div>
+            </div>
+            <div style={{background:'#f8fafc',borderRadius:'10px',padding:'10px 18px',textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:800,color:'#475569'}}>{cityCount}</div>
+              <div style={{fontSize:'12px',color:'#64748b'}}>городов</div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div style={{display:'flex',gap:'12px',marginBottom:'24px',flexWrap:'wrap',alignItems:'center'}}>
+      <div style={{marginBottom:'12px'}}>
+        <input placeholder="Поиск по имени тренера..." value={searchName} onChange={e=>setSearchName(e.target.value)}
+          style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'15px',outline:'none',boxSizing:'border-box'}} />
+      </div>
+      <div style={{display:'flex',gap:'10px',marginBottom:'24px',flexWrap:'wrap',alignItems:'center'}}>
         <select value={selectedCity} onChange={e=>setSelectedCity(e.target.value)}
           style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
           <option value="">Все города</option>
           {cities.map(c=><option key={c.id} value={String(c.id)}>{c.name}</option>)}
         </select>
-        <a href="/add-people" style={{padding:'10px 20px',background:'#1d4ed8',color:'white',borderRadius:'10px',textDecoration:'none',fontSize:'14px',fontWeight:600}}>
-          + Добавить
-        </a>
+        {slug==='trenery'&&(
+          <select value={selectedSpec} onChange={e=>setSelectedSpec(e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+            <option value="">Все специализации</option>
+            <option value="Вратари">Вратари</option>
+            <option value="Защитники">Защитники</option>
+            <option value="Нападающие">Нападающие</option>
+            <option value="Взрослые">Взрослые</option>
+            <option value="Дети">Дети</option>
+            <option value="Все возраста">Все возраста</option>
+          </select>
+        )}
+        {slug==='trenery'&&(
+          <select value={selectedPrice} onChange={e=>setSelectedPrice(e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+            <option value="">Любая цена</option>
+            <option value="low">До 1 500 руб/час</option>
+            <option value="mid">1 500 — 3 000 руб/час</option>
+            <option value="high">От 3 000 руб/час</option>
+          </select>
+        )}
+        <a href="/add-people" style={{padding:'10px 20px',background:'#1d4ed8',color:'white',borderRadius:'10px',textDecoration:'none',fontSize:'14px',fontWeight:600,marginLeft:'auto'}}>+ Добавить</a>
       </div>
 
       {loading ? (
         <div style={{textAlign:'center',color:'#94a3b8',padding:'60px 0'}}>Загрузка...</div>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length===0 ? (
         <div style={{textAlign:'center',padding:'80px 20px'}}>
-          <div style={{fontSize:'48px',marginBottom:'16px'}}>🚧</div>
-          <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Скоро здесь появятся записи</h2>
-          <p style={{color:'#94a3b8',fontSize:'14px',marginBottom:'24px'}}>Станьте первым кто добавит информацию</p>
+          <div style={{fontSize:'48px',marginBottom:'16px'}}>🔍</div>
+          <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Ничего не найдено</h2>
+          <p style={{color:'#94a3b8',marginBottom:'24px'}}>Попробуй изменить фильтры или добавь первым</p>
           <a href="/add-people" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить</a>
         </div>
       ) : (
-        <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+        <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
           {filtered.map(item=>(
-            <div key={item.id} style={{border:'1px solid #e2e8f0',borderRadius:'14px',padding:'20px',background:'white'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'16px'}}>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap',alignItems:'center'}}>
-                    <span style={{fontWeight:700,fontSize:'18px'}}>{item.name}</span>
-                    {item.is_verified&&<span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>✓ Проверено</span>}
-                    {item.is_featured&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>⭐ Топ</span>}
-                  </div>
-                  {item.city&&<div style={{fontSize:'13px',color:'#64748b',marginBottom:'8px'}}>📍 {item.city.name}</div>}
-                  <div style={{fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
-                    {item.specialization&&<span>🎯 {item.specialization}</span>}
-                    {item.experience&&<span>📅 Опыт: {item.experience}</span>}
-                    {item.age_from&&item.age_to&&<span>👶 Возраст: {item.age_from}–{item.age_to} лет</span>}
-                    {item.camp_type&&<span>🏕 Тип: {item.camp_type}</span>}
-                    {item.dates&&<span>📆 {item.dates}</span>}
-                    {item.address&&<span>🏠 {item.address}</span>}
-                    {item.description&&<span style={{marginTop:'4px',color:'#475569'}}>{item.description}</span>}
-                  </div>
-                </div>
-                <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
-                  {item.phone&&<a href={`tel:${item.phone}`} style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center'}}>📞 Позвонить</a>}
-                  {item.telegram&&<a href={item.telegram.startsWith('http')?item.telegram:`https://t.me/${item.telegram.replace('@','')}`} target="_blank" rel="noreferrer"
-                    style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center'}}>💬 Написать</a>}
-                  {item.website&&<a href={item.website} target="_blank" rel="noreferrer"
-                    style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center'}}>🌐 Сайт</a>}
-                </div>
-              </div>
-            </div>
+            <ItemCard key={item.id} item={item} idField={cat.idField} cat={cat} />
           ))}
         </div>
       )}
