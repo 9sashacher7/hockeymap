@@ -113,12 +113,19 @@ function ItemCard({ item, idField, cat }) {
     setReviews(Array.isArray(data) ? data : [])
   }
 
-  useEffect(() => { loadReviews() }, [item.id])
+  useEffect(() => {
+    loadReviews()
+    if (typeof window !== 'undefined' && window.location.hash === '#coach-'+item.id) {
+      setTimeout(() => {
+        document.getElementById('coach-'+item.id)?.scrollIntoView({behavior:'smooth', block:'start'})
+      }, 500)
+    }
+  }, [item.id])
 
   const avgRating = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
 
   return (
-    <div style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0')}}>
+    <div id={'coach-'+item.id} style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0')}}>
       <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
         <Avatar name={item.name} verified={item.is_verified} />
         <div style={{flex:1}}>
@@ -156,6 +163,14 @@ function ItemCard({ item, idField, cat }) {
             <button onClick={()=>setShowForm(!showForm)}
               style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #1d4ed8',background:showForm?'#1d4ed8':'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:showForm?'white':'#1d4ed8'}}>
               {showForm?'Отмена':'+ Отзыв'}
+            </button>
+            <button onClick={()=>{
+                const url = window.location.origin + window.location.pathname + '#coach-' + item.id
+                navigator.clipboard.writeText(url)
+                alert('Ссылка скопирована!')
+              }}
+              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#64748b'}}>
+              🔗 Поделиться
             </button>
           </div>
 

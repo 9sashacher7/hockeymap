@@ -194,7 +194,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       {filtered.length === 0 && category && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏒</div>
-          <p>Мест пока нет</p>
+          <div style={{textAlign:'center',padding:'60px 20px'}}>
+  <div style={{fontSize:'48px',marginBottom:'16px'}}>🚧</div>
+  <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Скоро здесь появятся места</h2>
+  <p style={{color:'#94a3b8',marginBottom:'24px'}}>Мы собираем лучшие ресурсы для хоккеистов и хоккейного сообщества</p>
+  <a href="/add" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить место</a>
+</div>
         </div>
       )}
     </main>

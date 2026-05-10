@@ -162,6 +162,7 @@ export default function AdminPage() {
     const ok = await sbPost('online_services', {
       name: sub.name, type: 'other', url: sub.url||null,
       description: sub.description||null, category_slug: sub.category_slug||null,
+      city: sub.city||null, specialization: sub.specialization||null,
       is_verified: false, is_featured: false, subscribers_count: null,
     })
     if (ok) { await sbDelete('online_submissions', sub.id); setMessage('Сервис добавлен'); loadData() }

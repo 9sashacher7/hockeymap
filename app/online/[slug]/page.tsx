@@ -95,34 +95,44 @@ export default function OnlineCategoryPage() {
         <div style={{textAlign:'center',padding:'80px 20px'}}>
           <div style={{fontSize:'48px',marginBottom:'16px'}}>🚧</div>
           <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Скоро здесь появятся сервисы</h2>
-          <p style={{color:'#94a3b8',fontSize:'14px',marginBottom:'24px'}}>Мы собираем лучшие ресурсы для хоккеистов</p>
+          <p style={{color:'#94a3b8',fontSize:'14px',marginBottom:'24px'}}>Мы собираем лучшие ресурсы для хоккеистов и хоккейного сообщества</p>
           <a href="/add-online" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить</a>
         </div>
       ) : (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:'16px'}}>
           {displayed.map((s: any) => (
             <a key={s.id} href={s.url || '#'} target="_blank" rel="noopener noreferrer"
-              style={{border:'1px solid '+(s.is_featured?'#fde68a':s.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column',background:'white',borderLeft:'4px solid '+(s.is_featured?'#f59e0b':s.is_verified?'#16a34a':'#e2e8f0'),transition:'box-shadow 0.15s'}}
-              onMouseEnter={e=>(e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)')}
-              onMouseLeave={e=>(e.currentTarget.style.boxShadow='none')}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px',gap:'8px'}}>
-                <div style={{fontWeight:700,fontSize:'16px'}}>{s.name}</div>
-                <div style={{display:'flex',flexDirection:'column',gap:'4px',flexShrink:0}}>
-                  {s.is_featured && <span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>⭐ Топ</span>}
-                  {s.is_verified && <span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>✓ Проверено</span>}
+              style={{borderRadius:'16px',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',transition:'box-shadow 0.2s,transform 0.2s'}}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.14)';e.currentTarget.style.transform='translateY(-2px)'}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';e.currentTarget.style.transform='translateY(0)'}}>
+
+              {/* Градиентная шапка */}
+              <div style={{background:s.is_featured?'linear-gradient(135deg,#f59e0b,#d97706)':s.is_verified?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#1d4ed8,#1e40af)',padding:'20px',position:'relative',overflow:'hidden'}}>
+                {/* Водяной знак иконка */}
+                <div style={{position:'absolute',right:'-10px',top:'-10px',fontSize:'80px',opacity:0.15,lineHeight:1}}>
+                  {slug==='avito'?'📦':slug==='baraholki'?'🔄':slug==='internet-magaziny'?'🛒':slug==='statistika'?'📊':'⭐'}
                 </div>
+                <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+                  {s.is_featured&&<span style={{background:'rgba(255,255,255,0.25)',color:'white',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>⭐ Топ</span>}
+                  {s.is_verified&&<span style={{background:'rgba(255,255,255,0.25)',color:'white',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>✓ Проверено</span>}
+                </div>
+                <div style={{fontWeight:800,fontSize:'18px',color:'white',lineHeight:1.2}}>{s.name}</div>
               </div>
-              {s.description && <p style={{fontSize:'13px',color:'#64748b',margin:'0 0 12px',lineHeight:'1.6',flex:1}}>{s.description}</p>}
-              <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'12px'}}>
-                {s.city&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Город:</span> {s.city}</div>}
-                {s.specialization&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Специализация:</span> {s.specialization}</div>}
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'auto',paddingTop:'12px',borderTop:'1px solid #f1f5f9'}}>
-                {s.subscribers_count
-                  ? <span style={{fontSize:'12px',color:'#94a3b8'}}>👥 {s.subscribers_count.toLocaleString('ru-RU')}</span>
-                  : <span/>
-                }
-                {s.url && <span style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600}}>Перейти →</span>}
+
+              {/* Тело карточки */}
+              <div style={{padding:'16px',background:'white',flex:1,display:'flex',flexDirection:'column'}}>
+                {s.description&&<p style={{fontSize:'13px',color:'#64748b',margin:'0 0 12px',lineHeight:'1.6',flex:1}}>{s.description}</p>}
+                <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'12px'}}>
+                  {s.city&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Город:</span> {s.city}</div>}
+                  {s.specialization&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Специализация:</span> {s.specialization}</div>}
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:'12px',borderTop:'1px solid #f1f5f9',marginTop:'auto'}}>
+                  {s.subscribers_count
+                    ? <span style={{fontSize:'12px',color:'#94a3b8'}}>👥 {s.subscribers_count.toLocaleString('ru-RU')}</span>
+                    : <span/>
+                  }
+                  {s.url&&<span style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600}}>Перейти →</span>}
+                </div>
               </div>
             </a>
           ))}
