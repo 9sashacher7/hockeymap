@@ -130,7 +130,6 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <div style={{fontSize:'20px',fontWeight:800,color:'#475569'}}>{[...new Set(places.filter((p:any)=>p.city).map((p:any)=>p.city?.name))].length}</div>
             <div style={{fontSize:'12px',color:'#64748b'}}>городов</div>
           </div>
-        )}
       </div>
       <div style={{marginBottom:'16px'}}>
         <input placeholder="Поиск по названию..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
