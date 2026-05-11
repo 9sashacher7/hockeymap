@@ -16,7 +16,7 @@ async function postReview(placeId: number, name: string, rating: number, text: s
   await fetch(`${SURL}/rest/v1/reviews`, {
     method: 'POST',
     headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-    body: JSON.stringify({ place_id: placeId, author_name: name, rating, text })
+    body: JSON.stringify({ place_id: placeId, author_name: name, rating, text, is_approved: false })
   })
 }
 
@@ -70,6 +70,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   const [selectedCity, setSelectedCity] = useState('all')
   const [openId, setOpenId] = useState<number | null>(null)
   const [reviews, setReviews] = useState<Record<number, any[]>>({})
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -86,7 +87,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   }, [slug])
 
   async function loadReviews(placeId: number) {
-    const data = await sq('reviews', `place_id=eq.${placeId}&order=created_at.desc&limit=10`)
+    const data = await sq('reviews', `place_id=eq.${placeId}&is_approved=eq.true&order=created_at.desc&limit=10`)
     setReviews(prev => ({ ...prev, [placeId]: data || [] }))
   }
 
@@ -105,7 +106,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     return null
   }
 
-  const filtered = selectedCity === 'all' ? places : places.filter((p: any) => p.city?.slug === selectedCity)
+  const filtered = places.filter((p: any) => {
+    const matchesCity = selectedCity === 'all' || p.city?.slug === selectedCity
+    const q = searchQuery.toLowerCase().trim()
+    const matchesSearch = !q || p.name?.toLowerCase().includes(q) || (p.address ?? '').toLowerCase().includes(q)
+    return matchesCity && matchesSearch
+  })
 
   return (
     <main style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 20px' }}>
@@ -113,7 +119,23 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '2px', margin: '16px 0 4px', textTransform: 'uppercase' }}>
         {category?.name ?? 'Загрузка...'}
       </h1>
-      <p style={{ color: '#94a3b8', marginBottom: '24px' }}>{filtered.length} мест</p>
+        <a href="/add" style={{display:"inline-block",marginTop:"12px",marginBottom:"8px",padding:"10px 22px",background:"#1d4ed8",color:"white",borderRadius:"12px",textDecoration:"none",fontWeight:600,fontSize:"14px"}}>+ Добавить место</a>
+      <p style={{ color: '#94a3b8', marginBottom: '16px' }}>{filtered.length} мест</p>
+      <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginBottom:'16px'}}>
+        <div style={{background:'#eff6ff',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
+          <div style={{fontSize:'20px',fontWeight:800,color:'#1d4ed8'}}>{places.length}</div>
+          <div style={{fontSize:'12px',color:'#64748b'}}>всего</div>
+        </div>
+          <div style={{background:'#f8fafc',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
+            <div style={{fontSize:'20px',fontWeight:800,color:'#475569'}}>{[...new Set(places.filter((p:any)=>p.city).map((p:any)=>p.city?.name))].length}</div>
+            <div style={{fontSize:'12px',color:'#64748b'}}>городов</div>
+          </div>
+        )}
+      </div>
+      <div style={{marginBottom:'16px'}}>
+        <input placeholder="Поиск по названию..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
+          style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'15px',outline:'none',boxSizing:'border-box'}} />
+      </div>
 
       <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}
         style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '14px', marginBottom: '24px', width: '220px' }}>
