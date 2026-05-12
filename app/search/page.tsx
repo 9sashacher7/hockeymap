@@ -29,8 +29,22 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ q
     if (!text.trim()) return
     setLoading(true)
     setSearched(true)
-    const data = await sq('places', `select=*,city:cities(name,slug),category:categories(name,slug)&or=(name.ilike.*${encodeURIComponent(text)}*,address.ilike.*${encodeURIComponent(text)}*,description.ilike.*${encodeURIComponent(text)}*)&order=rating_avg.desc&limit=30`)
-    setResults(data || [])
+    const q = encodeURIComponent(text)
+    const [places, services, coaches, schools, camps] = await Promise.all([
+      sq('places', `select=*,city:cities(name,slug),category:categories(name,slug)&or=(name.ilike.*${q}*,address.ilike.*${q}*,description.ilike.*${q}*)&order=rating_avg.desc&limit=20`),
+      sq('online_services', `select=*&or=(name.ilike.*${q}*,description.ilike.*${q}*)&limit=10`),
+      sq('coaches', `select=*,city:cities(name,slug)&or=(name.ilike.*${q}*,description.ilike.*${q}*,specialization.ilike.*${q}*)&limit=10`),
+      sq('hockey_schools', `select=*,city:cities(name,slug)&or=(name.ilike.*${q}*,description.ilike.*${q}*)&limit=10`),
+      sq('hockey_camps', `select=*,city:cities(name,slug)&or=(name.ilike.*${q}*,description.ilike.*${q}*)&limit=10`),
+    ])
+    const all = [
+      ...(Array.isArray(places)?places:[]).map(p=>({...p,_type:'place'})),
+      ...(Array.isArray(services)?services:[]).map(s=>({...s,_type:'service'})),
+      ...(Array.isArray(coaches)?coaches:[]).map(c=>({...c,_type:'coach'})),
+      ...(Array.isArray(schools)?schools:[]).map(s=>({...s,_type:'school'})),
+      ...(Array.isArray(camps)?camps:[]).map(c=>({...c,_type:'camp'})),
+    ]
+    setResults(all)
     setLoading(false)
   }
 
@@ -76,27 +90,32 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ q
         <div>
           <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>Найдено: {results.length} мест</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {results.map((place: any) => (
-              <div key={place.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', border: '1px solid #e2e8f0', borderRadius: '14px' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#1d4ed8', fontSize: '13px', flexShrink: 0 }}>
-                  {place.name.slice(0, 2).toUpperCase()}
+            {results.map((item: any) => {
+              const typeLabel = item._type==='place'?item.category?.name:item._type==='service'?'Онлайн сервис':item._type==='coach'?'Тренер':item._type==='school'?'Хоккейная школа':'Лагерь'
+              const typeColor = item._type==='place'?'#eff6ff':item._type==='service'?'#f0fdf4':item._type==='coach'?'#fef9c3':item._type==='school'?'#f0f9ff':'#fff7ed'
+              const typeText = item._type==='place'?'#1d4ed8':item._type==='service'?'#16a34a':item._type==='coach'?'#854d0e':item._type==='school'?'#0369a1':'#c2410c'
+              const href = item._type==='place'?`/category/${item.category?.slug}`:item._type==='service'?`/online/${item.category_slug}`:item._type==='coach'?`/people/trenery`:item._type==='school'?`/people/shkoly`:`/people/sbory`
+              return (
+              <a key={item._type+item.id} href={href} style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 18px',border:'1px solid #e2e8f0',borderRadius:'14px',textDecoration:'none',color:'inherit'}}>
+                <div style={{width:'42px',height:'42px',borderRadius:'10px',background:typeColor,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:typeText,fontSize:'13px',flexShrink:0}}>
+                  {item.name.slice(0,2).toUpperCase()}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '15px' }}>{place.name}</div>
-                  <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                    {place.category?.name} · {place.city?.name}{place.address ? ` · ${place.address}` : ''}
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:'15px'}}>{item.name}</div>
+                  <div style={{fontSize:'12px',color:'#94a3b8',marginTop:'2px'}}>
+                    <span style={{background:typeColor,color:typeText,borderRadius:'4px',padding:'1px 6px',fontSize:'11px',fontWeight:600,marginRight:'6px'}}>{typeLabel}</span>
+                    {item.city?.name}{item.address?` · ${item.address}`:''}
                   </div>
-                  {place.hours && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>🕐 {place.hours}</div>}
-                  {place.phone && <div style={{ fontSize: '12px', marginTop: '2px' }}><a href={`tel:${place.phone}`} style={{ color: '#1d4ed8', textDecoration: 'none' }}>📞 {place.phone}</a></div>}
+                  {item.phone&&<div style={{fontSize:'12px',marginTop:'2px',color:'#1d4ed8'}}>📞 {item.phone}</div>}
                 </div>
-                {place.rating_avg > 0 && (
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontWeight: 600 }}>★ {place.rating_avg}</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>{place.rating_count} отз.</div>
+                {item.rating_avg>0&&(
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    <div style={{fontWeight:600}}>★ {item.rating_avg}</div>
+                    <div style={{fontSize:'12px',color:'#94a3b8'}}>{item.rating_count} отз.</div>
                   </div>
                 )}
-              </div>
-            ))}
+              </a>
+            )})}
           </div>
         </div>
       )}

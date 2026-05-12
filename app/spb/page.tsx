@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Хоккейные сервисы Санкт-Петербурга — магазины, заточка, тренеры | HockeyMap',
+  description: 'Хоккейные магазины, заточка коньков, мастерские и тренеры в Санкт-Петербурге. Адреса, телефоны, отзывы.',
+  openGraph: { title: 'Хоккейные сервисы Санкт-Петербурга — магазины, заточка, тренеры | HockeyMap', description: 'Хоккейные магазины, заточка коньков, мастерские и тренеры в Санкт-Петербурге. Адреса, телефоны, отзывы.' }
+}
+
 'use client'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'

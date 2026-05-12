@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Добавить хоккейный магазин или сервис | HockeyMap',
+  description: 'Добавь хоккейный магазин, заточку или мастерскую на карту России. Помоги хоккейному сообществу найти нужные сервисы.',
+  openGraph: { title: 'Добавить хоккейный магазин или сервис | HockeyMap', description: 'Добавь хоккейный магазин, заточку или мастерскую на карту России. Помоги хоккейному сообществу найти нужные сервисы.' }
+}
+
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -34,6 +42,7 @@ export default function AddPage() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [showCustomCity, setShowCustomCity] = useState(false)
+  const [agreed, setAgreed] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -47,6 +56,7 @@ export default function AddPage() {
     submitter_name: '',
     submitter_contact: '',
     custom_city: '',
+    is_network: false,
   })
 
   useEffect(() => {
@@ -91,7 +101,7 @@ export default function AddPage() {
     />
   )
 
-  const isValid = form.name && form.category_id && (form.city_id && form.city_id !== 'other' || form.custom_city)
+  const isValid = form.name && form.category_id && (form.city_id && form.city_id !== 'other' || form.custom_city) && agreed
 
   return (
     <main style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
@@ -144,8 +154,29 @@ export default function AddPage() {
           О тебе
         </div>
 
+        <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'12px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',cursor:'pointer'}}
+          onClick={()=>setForm(prev=>({...prev,is_network:!prev.is_network}))}>
+          <div style={{width:'20px',height:'20px',borderRadius:'6px',border:'2px solid '+(form.is_network?'#1d4ed8':'#e2e8f0'),background:form.is_network?'#1d4ed8':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            {form.is_network&&<span style={{color:'white',fontSize:'13px',fontWeight:700}}>✓</span>}
+          </div>
+          <div>
+            <div style={{fontSize:'14px',fontWeight:600}}>🏙️ Сеть магазинов</div>
+            <div style={{fontSize:'12px',color:'#94a3b8'}}>У нас несколько точек в разных городах</div>
+          </div>
+        </div>
+
         {input('submitter_name', 'Твоё имя')}
         {input('submitter_contact', 'Telegram или email для связи')}
+
+        <div onClick={()=>setAgreed(!agreed)}
+          style={{display:'flex',alignItems:'flex-start',gap:'10px',cursor:'pointer',padding:'4px 0'}}>
+          <div style={{width:'20px',height:'20px',borderRadius:'6px',border:'2px solid '+(agreed?'#1d4ed8':'#e2e8f0'),background:agreed?'#1d4ed8':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px'}}>
+            {agreed&&<span style={{color:'white',fontSize:'13px',fontWeight:700}}>✓</span>}
+          </div>
+          <span style={{fontSize:'13px',color:'#374151',lineHeight:1.5}}>
+            Я согласен с <a href="/privacy" target="_blank" style={{color:'#1d4ed8'}} onClick={e=>e.stopPropagation()}>политикой конфиденциальности</a> и даю согласие на обработку персональных данных
+          </span>
+        </div>
 
         <button
           onClick={handleSubmit}

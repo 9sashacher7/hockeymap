@@ -102,7 +102,7 @@ export default function AdminPage() {
       sq('people_submissions', 'order=created_at.desc'),
       sq('cities', 'order=name'),
       sq('categories', 'order=name'),
-      sq('places', 'select=id,name,city_id,category_id,featured_until,featured_from&order=name'),
+      sq('places', 'select=id,name,city_id,category_id,featured_until,featured_from,is_top,is_popular,is_network,rating_avg,rating_count,popular_notified&order=name'),
       sq('online_services', 'select=id,name,category_slug,featured_until,featured_from,is_verified&order=name'),
       sq('coaches', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
       sq('hockey_schools', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
@@ -134,6 +134,31 @@ export default function AdminPage() {
 
   async function approve(sub) {
     setLoading(true)
+
+    // Редактирование существующего места
+    if (sub.type === 'edit' && sub.place_id) {
+      const ok = await sbPatch('places', sub.place_id, {
+        name: sub.name||undefined,
+        address: sub.address||null,
+        phone: sub.phone||null,
+        website: sub.website||null,
+        hours: sub.hours?{info:sub.hours}:null,
+        description: sub.description||null,
+      })
+      if (ok) { await sbDelete('submissions', sub.id); setMessage('Место обновлено'); loadData() }
+      else setMessage('Ошибка')
+      setLoading(false)
+      return
+    }
+
+    // Жалоба — просто удаляем заявку после ознакомления
+    if (sub.type === 'report') {
+      await sbDelete('submissions', sub.id)
+      setMessage('Жалоба принята к сведению'); loadData(); setLoading(false)
+      return
+    }
+
+    // Новое место
     let cityId = sub.city_id
     if (!cityId && sub.custom_city) {
       const slug = slugify(sub.custom_city)
@@ -151,6 +176,7 @@ export default function AdminPage() {
       address: sub.address||null, phone: sub.phone||null, website: sub.website||null,
       hours: sub.hours?{info:sub.hours}:null, description: sub.description||null,
       is_online: false, is_verified: true, is_featured: false, rating_avg: 0, rating_count: 0,
+      is_network: sub.is_network||false,
     })
     if (ok) { await sbDelete('submissions', sub.id); setMessage('Место добавлено'); loadData() }
     else setMessage('Ошибка')
@@ -162,7 +188,7 @@ export default function AdminPage() {
     const ok = await sbPost('online_services', {
       name: sub.name, type: 'other', url: sub.url||null,
       description: sub.description||null, category_slug: sub.category_slug||null,
-      city: sub.city||null, specialization: sub.specialization||null,
+      city: sub.city||null, specialization: sub.specialization||null, delivery: sub.delivery||null, payment: sub.payment||null,
       is_verified: false, is_featured: false, subscribers_count: null,
     })
     if (ok) { await sbDelete('online_submissions', sub.id); setMessage('Сервис добавлен'); loadData() }
@@ -209,8 +235,37 @@ export default function AdminPage() {
   async function approveReview(r) {
     setLoading(true)
     await sbPatch('reviews', r.id, { is_approved: true })
+
+    // Пересчитываем рейтинг места если это офлайн отзыв
+    if (r.place_id) {
+      const allReviews = await sq('reviews', `place_id=eq.${r.place_id}&is_approved=eq.true`)
+      const approved = Array.isArray(allReviews) ? allReviews : []
+      // Включаем текущий отзыв
+      const total = [...approved, {...r, is_approved: true}]
+      const avg = total.reduce((s, x) => s + x.rating, 0) / total.length
+        const newAvg = Math.round(avg * 10) / 10
+      const newCount = total.length
+      const isTop = newAvg >= 4.9
+      await sbPatch('places', r.place_id, {
+        rating_avg: newAvg,
+        rating_count: newCount,
+        is_top: isTop,
+      })
+      // Уведомление при достижении 50+ отзывов
+      const placeData = allPlaces.find(p => p.id === r.place_id)
+      if (newCount >= 50 && placeData && !placeData.popular_notified) {
+        await sbPatch('places', r.place_id, { popular_notified: true })
+        setMessage('✅ Отзыв одобрен 🎉 Место ' + (placeData?.name||'') + ' набрало 50+ отзывов! Проверь раздел Плашки.')
+        setLoading(false)
+        setAllPlaces(prev => prev.map(p => p.id===r.place_id ? {...p, rating_avg:newAvg, rating_count:newCount, is_top:isTop, popular_notified:true} : p))
+        setReviews(prev => prev.map(x => x.id===r.id ? {...x, is_approved:true} : x))
+        return
+      }
+      setAllPlaces(prev => prev.map(p => p.id===r.place_id ? {...p, rating_avg:newAvg, rating_count:newCount, is_top:isTop} : p))
+    }
+
     setReviews(prev => prev.map(x => x.id===r.id ? {...x, is_approved:true} : x))
-    setMessage('Отзыв одобрен')
+    setMessage('✅ Отзыв одобрен')
     setLoading(false)
   }
 
@@ -220,6 +275,26 @@ export default function AdminPage() {
     await sbDelete('reviews', r.id)
     setReviews(prev => prev.filter(x => x.id !== r.id))
     setMessage('Отзыв удалён'); setLoading(false)
+  }
+
+  async function togglePopular(place) {
+    const newVal = !place.is_popular
+    setAllPlaces(prev => prev.map(p => p.id===place.id ? {...p, is_popular:newVal} : p))
+    await sbPatch('places', place.id, { is_popular: newVal })
+    setMessage(newVal ? '👥 Плашка Популярный выставлена' : 'Плашка снята')
+  }
+
+  async function toggleNetwork(place) {
+    const newVal = !place.is_network
+    setAllPlaces(prev => prev.map(p => p.id===place.id ? {...p, is_network:newVal} : p))
+    await sbPatch('places', place.id, { is_network: newVal })
+    setMessage(newVal ? '🏙️ Плашка Сеть магазинов выставлена' : 'Плашка снята')
+  }
+
+  async function revokeTop(place) {
+    setAllPlaces(prev => prev.map(p => p.id===place.id ? {...p, is_top:false} : p))
+    await sbPatch('places', place.id, { is_top: false })
+    setMessage('🏆 Плашка Топ магазин отозвана')
   }
 
   async function toggleVerified(s) {
@@ -322,6 +397,7 @@ export default function AdminPage() {
     {key:'top',label:'Топ',color:'#f59e0b'},
     {key:'verified',label:'Проверено',color:'#16a34a'},
     {key:'reviews',label:'Отзывы ('+reviews.filter(r=>!r.is_approved).length+')',color:'#7c3aed'},
+    {key:'badges',label:'Плашки ('+allPlaces.filter(p=>p.popular_notified&&!p.is_popular).length+')',color:'#f59e0b'},
   ]
 
   if (!auth) return (
@@ -652,6 +728,88 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {tab==='badges'&&(
+        <div>
+          {/* Уведомления о 50+ отзывах */}
+          {allPlaces.filter(p=>p.popular_notified&&!p.is_popular).length>0&&(
+            <div style={{background:'#fffbeb',border:'1px solid #fde68a',borderRadius:'14px',padding:'16px 20px',marginBottom:'24px'}}>
+              <div style={{fontWeight:700,fontSize:'15px',marginBottom:'12px'}}>🔔 Новые кандидаты на плашку Популярный</div>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                {allPlaces.filter(p=>p.popular_notified&&!p.is_popular).map(p=>(
+                  <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'white',borderRadius:'10px',padding:'12px 16px',border:'1px solid #fde68a'}}>
+                    <div>
+                      <span style={{fontWeight:600}}>{p.name}</span>
+                      <span style={{fontSize:'12px',color:'#94a3b8',marginLeft:'8px'}}>{p.rating_count} отзывов · ★{p.rating_avg}</span>
+                    </div>
+                    <button onClick={()=>togglePopular(p)} style={{padding:'8px 16px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                      👥 Выдать
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Топ магазины */}
+          <div style={{padding:'20px',background:'#fefce8',border:'1px solid #fde68a',borderRadius:'14px',marginBottom:'16px'}}>
+            <div style={{fontWeight:700,fontSize:'16px',marginBottom:'4px'}}>🏆 Топ магазин</div>
+            <div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'16px'}}>Выдаётся автоматически при рейтинге 4.9+. Можно отозвать вручную.</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
+              {allPlaces.filter(p=>p.is_top).map(p=>(
+                <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'white',borderRadius:'10px',border:'1px solid #fde68a'}}>
+                  <div>
+                    <span style={{fontWeight:600}}>{p.name}</span>
+                    <span style={{fontSize:'12px',color:'#94a3b8',marginLeft:'8px'}}>★{p.rating_avg} · {p.rating_count} отз.</span>
+                  </div>
+                  <button onClick={()=>revokeTop(p)} style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:'#dc2626',color:'white',fontWeight:600,fontSize:'12px',cursor:'pointer'}}>Отозвать</button>
+                </div>
+              ))}
+              {allPlaces.filter(p=>p.is_top).length===0&&<div style={{textAlign:'center',color:'#94a3b8',padding:'20px 0'}}>Нет топ магазинов</div>}
+            </div>
+          </div>
+
+          {/* Популярные */}
+          <div style={{padding:'20px',background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:'14px',marginBottom:'16px'}}>
+            <div style={{fontWeight:700,fontSize:'16px',marginBottom:'4px'}}>👥 Популярный</div>
+            <div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'16px'}}>Выдаётся вручную когда место набирает 50+ отзывов.</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
+              {allPlaces.filter(p=>p.rating_count>=50||p.is_popular).map(p=>(
+                <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'white',borderRadius:'10px',border:'1px solid '+(p.is_popular?'#bfdbfe':'#e2e8f0')}}>
+                  <div>
+                    <span style={{fontWeight:600}}>{p.name}</span>
+                    <span style={{fontSize:'12px',color:'#94a3b8',marginLeft:'8px'}}>{p.rating_count} отзывов</span>
+                    {p.is_popular&&<span style={{marginLeft:'8px',background:'#dbeafe',color:'#1d4ed8',borderRadius:'6px',padding:'1px 8px',fontSize:'11px',fontWeight:700}}>Активна</span>}
+                  </div>
+                  <button onClick={()=>togglePopular(p)} style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:p.is_popular?'#dc2626':'#1d4ed8',color:'white',fontWeight:600,fontSize:'12px',cursor:'pointer'}}>
+                    {p.is_popular?'Снять':'Выдать'}
+                  </button>
+                </div>
+              ))}
+              {allPlaces.filter(p=>p.rating_count>=50||p.is_popular).length===0&&<div style={{textAlign:'center',color:'#94a3b8',padding:'20px 0'}}>Пока нет мест с 50+ отзывами</div>}
+            </div>
+          </div>
+
+          {/* Сеть магазинов */}
+          <div style={{padding:'20px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'14px'}}>
+            <div style={{fontWeight:700,fontSize:'16px',marginBottom:'4px'}}>🏙️ Сеть магазинов</div>
+            <div style={{fontSize:'12px',color:'#94a3b8',marginBottom:'16px'}}>Выдаётся вручную. Заявители могут сами указать что они сеть.</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
+              {allPlaces.map(p=>(
+                <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'white',borderRadius:'10px',border:'1px solid '+(p.is_network?'#bbf7d0':'#e2e8f0')}}>
+                  <div>
+                    <span style={{fontWeight:600}}>{p.name}</span>
+                    {p.is_network&&<span style={{marginLeft:'8px',background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'1px 8px',fontSize:'11px',fontWeight:700}}>Активна</span>}
+                  </div>
+                  <button onClick={()=>toggleNetwork(p)} style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:p.is_network?'#dc2626':'#16a34a',color:'white',fontWeight:600,fontSize:'12px',cursor:'pointer'}}>
+                    {p.is_network?'Снять':'Выдать'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

@@ -152,6 +152,18 @@ export default async function HomePage() {
           </a>
         </div>
       </section>
+
+      {/* Обратная связь */}
+      <section style={{background:'#0f172a',padding:'48px 20px',textAlign:'center'}}>
+        <div style={{maxWidth:'600px',margin:'0 auto'}}>
+          <div style={{fontSize:'32px',marginBottom:'16px'}}>💬</div>
+          <h2 style={{fontSize:'24px',fontWeight:800,color:'white',marginBottom:'12px'}}>Есть идея или предложение?</h2>
+          <p style={{color:'#94a3b8',marginBottom:'28px',fontSize:'15px'}}>Помоги сделать HockeyMap лучше — напиши нам</p>
+          <a href="/contact" style={{display:'inline-block',padding:'14px 32px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600,fontSize:'15px'}}>
+            ✉️ Написать нам
+          </a>
+        </div>
+      </section>
     </main>
   )
 }

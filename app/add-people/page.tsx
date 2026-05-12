@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Добавить тренера или школу | HockeyMap',
+  description: 'Добавь тренера по хоккею, школу или лагерь на HockeyMap. Помоги хоккеистам найти обучение.',
+  openGraph: { title: 'Добавить тренера или школу | HockeyMap', description: 'Добавь тренера по хоккею, школу или лагерь на HockeyMap. Помоги хоккеистам найти обучение.' }
+}
+
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'

@@ -28,6 +28,8 @@ export default function OnlineCategoryPage() {
   const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [onlyVerified, setOnlyVerified] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCity, setSelectedCity] = useState('')
 
   useEffect(() => {
     if (!slug) return
@@ -49,8 +51,12 @@ export default function OnlineCategoryPage() {
     </main>
   )
 
-  const displayed = onlyVerified ? services.filter(s => s.is_verified) : services
+  const displayed = services
+    .filter(s => !onlyVerified || s.is_verified)
+    .filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || (s.description||'').toLowerCase().includes(searchQuery.toLowerCase()) || (s.city||'').toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(s => !selectedCity || (s.city||'').toLowerCase() === selectedCity.toLowerCase())
   const verifiedCount = services.filter(s => s.is_verified).length
+  const cities = [...new Set(services.filter(s => s.city).map(s => s.city))] as string[]
 
   return (
     <main style={{maxWidth:'900px',margin:'0 auto',padding:'40px 20px'}}>
@@ -78,11 +84,24 @@ export default function OnlineCategoryPage() {
       </div>
 
       {!loading && services.length > 0 && (
+        <div style={{marginBottom:'12px'}}>
+          <input placeholder="Поиск по названию, городу, описанию..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
+            style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'15px',outline:'none',boxSizing:'border-box'}} />
+        </div>
+      )}
+      {!loading && services.length > 0 && (
         <div style={{display:'flex',gap:'10px',marginBottom:'24px',alignItems:'center',flexWrap:'wrap'}}>
           <button onClick={() => setOnlyVerified(!onlyVerified)}
             style={{padding:'8px 16px',borderRadius:'10px',border:'1px solid '+(onlyVerified?'#16a34a':'#e2e8f0'),background:onlyVerified?'#f0fdf4':'white',color:onlyVerified?'#16a34a':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
             {onlyVerified ? '✓ Только проверенные' : 'Только проверенные'}
           </button>
+          {cities.length > 0 && (
+            <select value={selectedCity} onChange={e=>setSelectedCity(e.target.value)}
+              style={{padding:'8px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'13px',outline:'none',background:'white'}}>
+              <option value="">Все города</option>
+              {cities.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
           <a href="/add-online" style={{padding:'8px 16px',background:'#1d4ed8',color:'white',borderRadius:'10px',textDecoration:'none',fontSize:'13px',fontWeight:600,marginLeft:'auto'}}>
             + Добавить сервис
           </a>
@@ -121,10 +140,12 @@ export default function OnlineCategoryPage() {
 
               {/* Тело карточки */}
               <div style={{padding:'16px',background:'white',flex:1,display:'flex',flexDirection:'column'}}>
-                {s.description&&<p style={{fontSize:'13px',color:'#64748b',margin:'0 0 12px',lineHeight:'1.6',flex:1}}>{s.description}</p>}
+                {s.description&&<div style={{fontSize:'13px',color:'#64748b',marginBottom:'12px',lineHeight:'1.6',flex:1}}><span style={{fontWeight:700,color:'#0f172a'}}>Описание:</span> {s.description}</div>}
                 <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'12px'}}>
                   {s.city&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Город:</span> {s.city}</div>}
                   {s.specialization&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Специализация:</span> {s.specialization}</div>}
+                  {s.delivery&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Доставка:</span> {s.delivery}</div>}
+                  {s.payment&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Оплата:</span> {s.payment}</div>}
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:'12px',borderTop:'1px solid #f1f5f9',marginTop:'auto'}}>
                   {s.subscribers_count

@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Хоккейные сервисы Москвы — магазины, заточка, тренеры | HockeyMap',
+  description: 'Хоккейные магазины, заточка коньков, мастерские и тренеры в Москве. Адреса, телефоны, отзывы.',
+  openGraph: { title: 'Хоккейные сервисы Москвы — магазины, заточка, тренеры | HockeyMap', description: 'Хоккейные магазины, заточка коньков, мастерские и тренеры в Москве. Адреса, телефоны, отзывы.' }
+}
+
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 

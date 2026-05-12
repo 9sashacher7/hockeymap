@@ -71,6 +71,14 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   const [openId, setOpenId] = useState<number | null>(null)
   const [reviews, setReviews] = useState<Record<number, any[]>>({})
   const [searchQuery, setSearchQuery] = useState('')
+  const [editId, setEditId] = useState<number|null>(null)
+  const [editForm, setEditForm] = useState<any>({})
+  const [editLoading, setEditLoading] = useState(false)
+  const [editDone, setEditDone] = useState<number|null>(null)
+  const [reportId, setReportId] = useState<number|null>(null)
+  const [reportText, setReportText] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportDone, setReportDone] = useState<number|null>(null)
 
   useEffect(() => {
     async function load() {
@@ -96,6 +104,45 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     else { setOpenId(placeId); loadReviews(placeId) }
   }
 
+  async function submitEdit(place: any) {
+    setEditLoading(true)
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        type: 'edit', place_id: place.id,
+        name: editForm.name || place.name,
+        address: editForm.address ?? place.address,
+        phone: editForm.phone ?? place.phone,
+        website: editForm.website ?? place.website,
+        hours: editForm.hours ?? place.hours,
+        description: editForm.description ?? place.description,
+        category_id: place.category_id,
+        city_id: place.city?.id || null,
+      })
+    })
+    setEditLoading(false)
+    setEditDone(place.id)
+    setEditId(null)
+  }
+
+  async function submitReport(place: any) {
+    setReportLoading(true)
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        type: 'report', place_id: place.id,
+        name: place.name, category_id: place.category_id, city_id: place.city?.id || null,
+        description: reportText,
+      })
+    })
+    setReportLoading(false)
+    setReportDone(place.id)
+    setReportId(null)
+    setReportText('')
+  }
+
   function yandexNavUrl(place: any) {
     if (place.latitude && place.longitude) {
       return `yandexnavi://map_search?text=${encodeURIComponent(place.name)}&ll=${place.longitude},${place.latitude}&z=16`
@@ -114,7 +161,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   })
 
   return (
-    <main style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 20px' }}>
+    <main style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 20px', width: '100%', boxSizing: 'border-box' }}>
       <Link href="/" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none' }}>← Главная</Link>
       <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '2px', margin: '16px 0 4px', textTransform: 'uppercase' }}>
         {category?.name ?? 'Загрузка...'}
@@ -142,21 +189,28 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
         {cities.map((c: any) => <option key={c.id} value={c.slug}>{c.name}</option>)}
       </select>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
         {filtered.map((place: any) => {
           const navUrl = yandexNavUrl(place)
           return (
             <div key={place.id} style={{ border: '1px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden' }}>
               <div onClick={() => handleOpen(place.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', cursor: 'pointer', background: openId === place.id ? '#f8fafc' : 'white' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#1d4ed8', fontSize: '13px', flexShrink: 0 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 22px', cursor: 'pointer', background: openId === place.id ? '#f8fafc' : 'white' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#1d4ed8', fontSize: '15px', flexShrink: 0 }}>
                   {place.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '15px' }}>{place.name}</div>
-                  <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '17px' }}>{place.name}</div>
+                  <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '3px' }}>
                     {place.city?.name}{place.address ? ` · ${place.address}` : ''}
                   </div>
+                  {(place.is_top || place.is_popular || place.is_network) && (
+                    <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginTop:'4px'}}>
+                      {place.is_top && <span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'1px 6px',fontSize:'10px',fontWeight:700}}>🏆 Топ</span>}
+                      {place.is_popular && <span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:'6px',padding:'1px 6px',fontSize:'10px',fontWeight:700}}>👥 Популярный</span>}
+                      {place.is_network && <span style={{background:'#f0fdf4',color:'#16a34a',borderRadius:'6px',padding:'1px 6px',fontSize:'10px',fontWeight:700}}>🏙️ Сеть</span>}
+                    </div>
+                  )}
                 </div>
                 {place.rating_avg > 0 && (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -176,11 +230,66 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     {place.website && <div style={{ display: 'flex', gap: '10px' }}><span>🌐</span><a href={place.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#1d4ed8', textDecoration: 'none' }}>{place.website}</a></div>}
                     {place.description && <div style={{ fontSize: '14px', color: '#374151' }}>{place.description}</div>}
                     {place.is_verified && <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: 500 }}>✓ Проверено</div>}
+                    <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginTop:'4px'}}>
+                      {place.is_top && <span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>🏆 Топ магазин</span>}
+                      {place.is_popular && <span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>👥 Популярный</span>}
+                      {place.is_network && <span style={{background:'#f0fdf4',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:700}}>🏙️ Сеть магазинов</span>}
+                    </div>
                     {navUrl && (
                       <a href={navUrl} target="_blank" rel="noopener noreferrer"
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#1d4ed8', color: 'white', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, justifyContent: 'center' }}>
                         🗺️ Как проехать
                       </a>
+                    )}
+
+                    <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
+                      <button onClick={()=>{setEditId(editId===place.id?null:place.id);setEditForm({});setReportId(null)}}
+                        style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#374151'}}>
+                        ✏️ Редактировать
+                      </button>
+                      <button onClick={()=>{setReportId(reportId===place.id?null:place.id);setReportText('');setEditId(null)}}
+                        style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>
+                        ⚠️ Сообщить об ошибке
+                      </button>
+                    </div>
+
+                    {editDone===place.id&&(
+                      <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'12px',fontSize:'13px',color:'#16a34a',textAlign:'center'}}>
+                        ✓ Спасибо! Изменения отправлены на проверку
+                      </div>
+                    )}
+
+                    {editId===place.id&&(
+                      <div style={{background:'#f8fafc',borderRadius:'10px',padding:'14px',border:'1px solid #e2e8f0',display:'flex',flexDirection:'column',gap:'8px'}}>
+                        <div style={{fontSize:'12px',fontWeight:600,color:'#374151',marginBottom:'4px'}}>Редактировать данные</div>
+                        {[['name','Название'],['address','Адрес'],['phone','Телефон'],['website','Сайт'],['hours','Часы работы'],['description','Описание']].map(([f,pl])=>(
+                          <input key={f} placeholder={pl} defaultValue={place[f]||''}
+                            onChange={e=>setEditForm((prev:any)=>({...prev,[f]:e.target.value}))}
+                            style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',fontSize:'13px',outline:'none'}} />
+                        ))}
+                        <button onClick={()=>submitEdit(place)} disabled={editLoading}
+                          style={{padding:'10px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'13px',fontWeight:600,cursor:'pointer'}}>
+                          {editLoading?'Отправляем...':'Отправить на проверку'}
+                        </button>
+                      </div>
+                    )}
+
+                    {reportDone===place.id&&(
+                      <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'12px',fontSize:'13px',color:'#16a34a',textAlign:'center'}}>
+                        ✓ Спасибо! Сообщение отправлено
+                      </div>
+                    )}
+
+                    {reportId===place.id&&(
+                      <div style={{background:'#fff7ed',borderRadius:'10px',padding:'14px',border:'1px solid #fed7aa',display:'flex',flexDirection:'column',gap:'8px'}}>
+                        <div style={{fontSize:'12px',fontWeight:600,color:'#374151'}}>Что не так?</div>
+                        <textarea placeholder="Опишите ошибку..." value={reportText} onChange={e=>setReportText(e.target.value)} rows={3}
+                          style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',fontSize:'13px',resize:'none',outline:'none'}} />
+                        <button onClick={()=>submitReport(place)} disabled={reportLoading||!reportText.trim()}
+                          style={{padding:'10px',borderRadius:'8px',border:'none',background:reportText.trim()?'#dc2626':'#e2e8f0',color:reportText.trim()?'white':'#94a3b8',fontSize:'13px',fontWeight:600,cursor:reportText.trim()?'pointer':'default'}}>
+                          {reportLoading?'Отправляем...':'Отправить'}
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -213,14 +322,11 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       </div>
 
       {filtered.length === 0 && category && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏒</div>
-          <div style={{textAlign:'center',padding:'60px 20px'}}>
-  <div style={{fontSize:'48px',marginBottom:'16px'}}>🚧</div>
-  <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Скоро здесь появятся места</h2>
-  <p style={{color:'#94a3b8',marginBottom:'24px'}}>Мы собираем лучшие ресурсы для хоккеистов и хоккейного сообщества</p>
-  <a href="/add" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить место</a>
-</div>
+        <div style={{textAlign:'center',padding:'60px 20px'}}>
+          <div style={{fontSize:'48px',marginBottom:'16px'}}>🚧</div>
+          <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'8px'}}>Скоро здесь появятся места</h2>
+          <p style={{color:'#94a3b8',marginBottom:'24px'}}>Мы собираем лучшие ресурсы для хоккеистов и хоккейного сообщества</p>
+          <a href="/add" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить место</a>
         </div>
       )}
     </main>

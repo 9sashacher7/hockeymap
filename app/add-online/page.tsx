@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Добавить онлайн сервис | HockeyMap',
+  description: 'Добавь хоккейный интернет-магазин, барахолку или полезный сервис на HockeyMap.',
+  openGraph: { title: 'Добавить онлайн сервис | HockeyMap', description: 'Добавь хоккейный интернет-магазин, барахолку или полезный сервис на HockeyMap.' }
+}
+
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -93,10 +101,25 @@ export default function AddOnlinePage() {
         {input('url', 'Ссылка (сайт, Telegram, Авито)', true)}
         {form.category_slug === 'avito' && <>
           {input('city', 'Город магазина')}
+          <select value={form.delivery} onChange={e => set('delivery', e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+            <option value="">Доставка</option>
+            <option value="По всей России">По всей России</option>
+            <option value="По городу">По городу</option>
+            <option value="Только самовывоз">Только самовывоз</option>
+          </select>
+          <select value={form.payment} onChange={e => set('payment', e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+            <option value="">Способ оплаты</option>
+            <option value="Наличные">Наличные</option>
+            <option value="Карта">Карта</option>
+            <option value="Перевод">Перевод</option>
+            <option value="Любой способ">Любой способ</option>
+          </select>
           <select value={form.specialization} onChange={e => set('specialization', e.target.value)}
             style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
             <option value="">Специализация (что продаёте)</option>
-            <option value="Всё подряд">Всё подряд</option>
+            <option value="Всё для хоккея">Всё для хоккея</option>
             <option value="Коньки">Коньки</option>
             <option value="Клюшки">Клюшки</option>
             <option value="Форма и защита">Форма и защита</option>
