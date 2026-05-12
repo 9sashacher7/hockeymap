@@ -443,17 +443,43 @@ export default function AdminPage() {
         ? <div style={{textAlign:'center',color:'#94a3b8',padding:'80px 0'}}>Новых заявок нет</div>
         : submissions.map(sub=>(
           <SubCard key={sub.id} sub={sub} onApprove={()=>approve(sub)} onReject={()=>reject(sub)}>
-            <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap'}}>
-              <span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:600}}>{getCatName(sub.category_id)}</span>
-              <span style={{background:'#f1f5f9',color:'#475569',borderRadius:'6px',padding:'2px 10px',fontSize:'12px'}}>{sub.custom_city||getCityName(sub.city_id)}</span>
+            <div style={{display:'flex',gap:'6px',marginBottom:'8px',flexWrap:'wrap'}}>
+              {(!sub.type||sub.type==='new')&&<span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:700}}>🆕 Новая заявка</span>}
+              {sub.type==='edit'&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:700}}>✏️ Редактирование {sub.people_type==='coach'?'тренера':sub.people_type==='school'?'школы':sub.people_type==='camp'?'лагеря':'места'}</span>}
+              {sub.type==='report'&&<span style={{background:'#fee2e2',color:'#dc2626',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:700}}>⚠️ Жалоба</span>}
+              {sub.is_network&&<span style={{background:'#f0fdf4',color:'#16a34a',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:700}}>🏙️ Сеть</span>}
+              {(!sub.type||sub.type==='new')&&<span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:600}}>{getCatName(sub.category_id)}</span>}
+              {(!sub.type||sub.type==='new')&&<span style={{background:'#f1f5f9',color:'#475569',borderRadius:'6px',padding:'2px 10px',fontSize:'12px'}}>{sub.custom_city||getCityName(sub.city_id)}</span>}
             </div>
             <div style={{fontWeight:700,fontSize:'18px',marginBottom:'8px'}}>{sub.name}</div>
-            <div style={{fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
-              {sub.address&&<span>📍 {sub.address}</span>}
-              {sub.phone&&<span>📞 {sub.phone}</span>}
-              {sub.website&&<span>🌐 {sub.website}</span>}
-              {sub.description&&<span>💬 {sub.description}</span>}
-            </div>
+            {(sub.type==='edit')&&(
+              <div style={{background:'#fffbeb',border:'1px solid #fde68a',borderRadius:'8px',padding:'10px 12px',marginBottom:'8px',fontSize:'12px'}}>
+                <div style={{fontWeight:700,color:'#92400e',marginBottom:'6px'}}>Изменённые данные:</div>
+                <div style={{display:'flex',flexDirection:'column',gap:'3px',color:'#78350f'}}>
+                  {sub.phone&&<span>📞 {sub.phone}</span>}
+                  {sub.address&&<span>📍 {sub.address}</span>}
+                  {sub.website&&<span>🌐 {sub.website}</span>}
+                  {sub.description&&<span>💬 {sub.description}</span>}
+                  {sub.people_type==='coach'&&sub.specialization&&<span>🏒 Специализация: {sub.specialization}</span>}
+                  {sub.people_type==='coach'&&sub.experience&&<span>⏱ Опыт: {sub.experience}</span>}
+                  {sub.people_type==='coach'&&sub.price_per_hour&&<span>💰 Цена: {sub.price_per_hour} руб/час</span>}
+                </div>
+              </div>
+            )}
+            {sub.type==='report'&&sub.description&&(
+              <div style={{background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:'8px',padding:'10px 12px',marginBottom:'8px',fontSize:'12px',color:'#991b1b'}}>
+                <div style={{fontWeight:700,marginBottom:'4px'}}>Текст жалобы:</div>
+                <div>{sub.description}</div>
+              </div>
+            )}
+            {(!sub.type||sub.type==='new')&&(
+              <div style={{fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
+                {sub.address&&<span>📍 {sub.address}</span>}
+                {sub.phone&&<span>📞 {sub.phone}</span>}
+                {sub.website&&<span>🌐 {sub.website}</span>}
+                {sub.description&&<span>💬 {sub.description}</span>}
+              </div>
+            )}
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
           </SubCard>
         ))

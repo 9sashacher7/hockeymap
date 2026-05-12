@@ -107,6 +107,64 @@ function ItemCard({ item, idField, cat }) {
   const [reviews, setReviews] = useState([])
   const [showReviews, setShowReviews] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [reportText, setReportText] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
+  const [editDone, setEditDone] = useState(false)
+  const [reportDone, setReportDone] = useState(false)
+
+  async function submitEdit() {
+    setEditLoading(true)
+    // Отправляем только изменённые поля
+    const fields = ['name','phone','website','address','description','specialization','experience','price_per_hour','age_from','age_to','dates']
+    const changed: any = {}
+    fields.forEach(f => {
+      if (editForm[f] !== undefined && editForm[f] !== '' && editForm[f] !== String(item[f]||'')) {
+        changed[f] = editForm[f]
+      }
+    })
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        type: 'edit',
+        people_type: idField === 'coach_id' ? 'coach' : idField === 'school_id' ? 'school' : 'camp',
+        name: item.name,
+        description: (()=>{
+          const labels = {name:'Имя',phone:'Телефон',website:'Сайт',address:'Адрес',description:'Описание',specialization:'Специализация',experience:'Опыт',price_per_hour:'Цена (руб/час)',age_from:'Возраст от',age_to:'Возраст до',dates:'Даты'}
+          return Object.entries(changed).map(function(e){
+            const label = labels[e[0]]||e[0]
+            const oldVal = item[e[0]]||'—'
+            return label+': '+oldVal+' → '+e[1]
+          }).join(', ')
+        })(),
+      })
+    })
+    setEditLoading(false)
+    setEditDone(true)
+    setShowEdit(false)
+  }
+
+  async function submitReport() {
+    setReportLoading(true)
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        type: 'report',
+        people_type: idField === 'coach_id' ? 'coach' : idField === 'school_id' ? 'school' : 'camp',
+        name: item.name,
+        description: reportText,
+      })
+    })
+    setReportLoading(false)
+    setReportDone(true)
+    setShowReport(false)
+    setReportText('')
+  }
 
   async function loadReviews() {
     const data = await sq('reviews', `${idField}=eq.${item.id}&is_approved=eq.true&order=created_at.desc`)
@@ -172,7 +230,55 @@ function ItemCard({ item, idField, cat }) {
               style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#64748b'}}>
               🔗 Поделиться
             </button>
+            <button onClick={()=>{setShowEdit(!showEdit);setShowReport(false)}}
+              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#374151'}}>
+              ✏️ Редактировать
+            </button>
+            <button onClick={()=>{setShowReport(!showReport);setShowEdit(false)}}
+              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>
+              ⚠️ Ошибка
+            </button>
           </div>
+
+          {editDone&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#16a34a',marginTop:'8px'}}>✓ Спасибо! Изменения отправлены на проверку</div>}
+          {reportDone&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#16a34a',marginTop:'8px'}}>✓ Спасибо! Сообщение отправлено</div>}
+
+          {showEdit&&(
+            <div style={{background:'#f8fafc',borderRadius:'10px',padding:'14px',border:'1px solid #e2e8f0',marginTop:'8px',display:'flex',flexDirection:'column',gap:'8px'}}>
+              <div style={{fontSize:'12px',fontWeight:600,color:'#374151',marginBottom:'4px'}}>Редактировать данные</div>
+              {[
+                ['name', idField==='coach_id'?'Имя и Фамилия':'Название'],
+                ['phone','Телефон'],
+                ['telegram','Telegram'],
+                ['website','Сайт'],
+                ['address','Адрес'],
+                ...(idField==='coach_id'?[['specialization','Специализация'],['experience','Опыт'],['price_per_hour','Цена за час (руб)']]: []),
+                ...(idField==='school_id'||idField==='camp_id'?[['age_from','Возраст от'],['age_to','Возраст до']]: []),
+                ...(idField==='camp_id'?[['dates','Даты проведения']]: []),
+                ['description','Описание'],
+              ].map(([f,pl])=>(
+                <input key={f} placeholder={pl} defaultValue={item[f]||''}
+                  onChange={e=>setEditForm(prev=>({...prev,[f]:e.target.value}))}
+                  style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',fontSize:'13px',outline:'none',width:'100%',boxSizing:'border-box'}} />
+              ))}
+              <button onClick={submitEdit} disabled={editLoading}
+                style={{padding:'10px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'13px',fontWeight:600,cursor:'pointer'}}>
+                {editLoading?'Отправляем...':'Отправить на проверку'}
+              </button>
+            </div>
+          )}
+
+          {showReport&&(
+            <div style={{background:'#fff7ed',borderRadius:'10px',padding:'14px',border:'1px solid #fed7aa',marginTop:'8px',display:'flex',flexDirection:'column',gap:'8px'}}>
+              <div style={{fontSize:'12px',fontWeight:600,color:'#374151'}}>Что не так?</div>
+              <textarea placeholder="Опишите ошибку..." value={reportText} onChange={e=>setReportText(e.target.value)} rows={3}
+                style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',fontSize:'13px',resize:'none',outline:'none'}} />
+              <button onClick={submitReport} disabled={reportLoading||!reportText.trim()}
+                style={{padding:'10px',borderRadius:'8px',border:'none',background:reportText.trim()?'#dc2626':'#e2e8f0',color:reportText.trim()?'white':'#94a3b8',fontSize:'13px',fontWeight:600,cursor:reportText.trim()?'pointer':'default'}}>
+                {reportLoading?'Отправляем...':'Отправить'}
+              </button>
+            </div>
+          )}
 
           {showReviews&&reviews.length>0&&(
             <div style={{marginTop:'12px',display:'flex',flexDirection:'column',gap:'8px'}}>
