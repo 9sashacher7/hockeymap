@@ -32,6 +32,8 @@ export default function AddPeoplePage() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [showCustomCity, setShowCustomCity] = useState(false)
+  const [agreed, setAgreed] = useState(false)
+  const [showConsent, setShowConsent] = useState(false)
   const [form, setForm] = useState({
     type: '',
     name: '',
@@ -84,7 +86,7 @@ export default function AddPeoplePage() {
     />
   )
 
-  const isValid = form.type && form.name && (form.city_id && form.city_id !== 'other' || form.custom_city) && (form.type !== 'coach' || form.price_per_hour)
+  const isValid = form.type && form.name && (form.city_id && form.city_id !== 'other' || form.custom_city) && (form.type !== 'coach' || form.price_per_hour) && agreed
 
   if (done) return (
     <main style={{maxWidth:'600px',margin:'0 auto',padding:'80px 20px',textAlign:'center'}}>
@@ -165,6 +167,16 @@ export default function AddPeoplePage() {
           <div style={{fontSize:'11px',fontWeight:600,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8',marginTop:'8px'}}>О тебе</div>
           {inp('submitter_name', 'Твоё имя')}
           {inp('submitter_contact', 'Telegram или email для связи')}
+
+          <div onClick={()=>setAgreed(!agreed)}
+            style={{display:'flex',alignItems:'flex-start',gap:'10px',cursor:'pointer',padding:'4px 0'}}>
+            <div style={{width:'20px',height:'20px',borderRadius:'6px',border:'2px solid '+(agreed?'#1d4ed8':'#e2e8f0'),background:agreed?'#1d4ed8':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px'}}>
+              {agreed&&<span style={{color:'white',fontSize:'13px',fontWeight:700}}>✓</span>}
+            </div>
+            <span style={{fontSize:'13px',color:'#374151',lineHeight:1.5}}>
+              Я согласен с <a href="/privacy" target="_blank" style={{color:'#1d4ed8'}} onClick={e=>e.stopPropagation()}>политикой конфиденциальности</a> и даю согласие на обработку персональных данных
+            </span>
+          </div>
 
           <button onClick={handleSubmit} disabled={loading||!isValid}
             style={{padding:'14px',borderRadius:'12px',border:'none',background:isValid?'#1d4ed8':'#e2e8f0',color:isValid?'white':'#94a3b8',fontSize:'15px',fontWeight:600,cursor:isValid?'pointer':'default',marginTop:'8px'}}>

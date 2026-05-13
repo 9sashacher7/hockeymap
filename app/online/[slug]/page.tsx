@@ -30,6 +30,39 @@ export default function OnlineCategoryPage() {
   const [onlyVerified, setOnlyVerified] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
+  const [editId, setEditId] = useState<number|null>(null)
+  const [editForm, setEditForm] = useState<any>({})
+  const [editLoading, setEditLoading] = useState(false)
+  const [editDone, setEditDone] = useState<number|null>(null)
+  const [reportId, setReportId] = useState<number|null>(null)
+  const [reportText, setReportText] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportDone, setReportDone] = useState<number|null>(null)
+
+  async function submitEdit(s: any) {
+    setEditLoading(true)
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ type: 'edit', name: s.name, description: Object.entries(editForm).filter(([,v])=>v).map(([k,v])=>k+': '+v).join(', ') })
+    })
+    setEditLoading(false)
+    setEditDone(s.id)
+    setEditId(null)
+  }
+
+  async function submitReport(s: any) {
+    setReportLoading(true)
+    await fetch(`${SURL}/rest/v1/submissions`, {
+      method: 'POST',
+      headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ type: 'report', name: s.name, description: reportText })
+    })
+    setReportLoading(false)
+    setReportDone(s.id)
+    setReportId(null)
+    setReportText('')
+  }
 
   useEffect(() => {
     if (!slug) return
@@ -120,10 +153,8 @@ export default function OnlineCategoryPage() {
       ) : (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:'16px'}}>
           {displayed.map((s: any) => (
-            <a key={s.id} href={s.url || '#'} target="_blank" rel="noopener noreferrer"
-              style={{borderRadius:'16px',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',transition:'box-shadow 0.2s,transform 0.2s'}}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.14)';e.currentTarget.style.transform='translateY(-2px)'}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';e.currentTarget.style.transform='translateY(0)'}}>
+            <div key={s.id}
+              style={{borderRadius:'16px',color:'inherit',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
 
               {/* Градиентная шапка */}
               <div style={{background:s.is_featured?'linear-gradient(135deg,#f59e0b,#d97706)':s.is_verified?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#1d4ed8,#1e40af)',padding:'20px',position:'relative',overflow:'hidden'}}>
@@ -147,15 +178,57 @@ export default function OnlineCategoryPage() {
                   {s.delivery&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Доставка:</span> {s.delivery}</div>}
                   {s.payment&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Оплата:</span> {s.payment}</div>}
                 </div>
+                {s.phone&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>📞</span> <a href={'tel:'+s.phone} style={{color:'#1d4ed8',textDecoration:'none'}}>{s.phone}</a></div>}
+                {s.social&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>🔗</span> <a href={s.social} target="_blank" rel="noreferrer" style={{color:'#1d4ed8',textDecoration:'none'}}>{s.social}</a></div>}
+
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:'12px',borderTop:'1px solid #f1f5f9',marginTop:'auto'}}>
                   {s.subscribers_count
                     ? <span style={{fontSize:'12px',color:'#94a3b8'}}>👥 {s.subscribers_count.toLocaleString('ru-RU')}</span>
                     : <span/>
                   }
-                  {s.url&&<span style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600}}>Перейти →</span>}
+                  {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600,textDecoration:'none'}}>Перейти →</a>}
                 </div>
+
+                <div style={{display:'flex',gap:'6px',marginTop:'10px',flexWrap:'wrap'}}>
+                  <button onClick={()=>{navigator.clipboard.writeText(window.location.href+'#service-'+s.id);alert('Ссылка скопирована!')}}
+                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#64748b'}}>🔗 Поделиться</button>
+                  <button onClick={()=>{setEditId(editId===s.id?null:s.id);setEditForm({});setReportId(null)}}
+                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#374151'}}>✏️ Редактировать</button>
+                  <button onClick={()=>{setReportId(reportId===s.id?null:s.id);setReportText('');setEditId(null)}}
+                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>⚠️ Ошибка</button>
+                </div>
+
+                {editDone===s.id&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'8px 12px',fontSize:'12px',color:'#16a34a',marginTop:'6px'}}>✓ Изменения отправлены на проверку</div>}
+                {reportDone===s.id&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'8px 12px',fontSize:'12px',color:'#16a34a',marginTop:'6px'}}>✓ Сообщение отправлено</div>}
+
+                {editId===s.id&&(
+                  <div style={{background:'#f8fafc',borderRadius:'8px',padding:'12px',border:'1px solid #e2e8f0',marginTop:'6px',display:'flex',flexDirection:'column',gap:'6px'}}>
+                    <div style={{fontSize:'11px',fontWeight:600,color:'#374151'}}>Редактировать данные</div>
+                    {[['name','Название'],['url','Ссылка'],['phone','Телефон'],['social','Соцсети'],['description','Описание']].map(([f,pl])=>(
+                      <input key={f} placeholder={pl} defaultValue={s[f]||''}
+                        onChange={e=>setEditForm((prev:any)=>({...prev,[f]:e.target.value}))}
+                        style={{padding:'7px 10px',borderRadius:'7px',border:'1px solid #e2e8f0',fontSize:'12px',outline:'none'}} />
+                    ))}
+                    <button onClick={()=>submitEdit(s)} disabled={editLoading}
+                      style={{padding:'8px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                      {editLoading?'Отправляем...':'Отправить на проверку'}
+                    </button>
+                  </div>
+                )}
+
+                {reportId===s.id&&(
+                  <div style={{background:'#fff7ed',borderRadius:'8px',padding:'12px',border:'1px solid #fed7aa',marginTop:'6px',display:'flex',flexDirection:'column',gap:'6px'}}>
+                    <div style={{fontSize:'11px',fontWeight:600,color:'#374151'}}>Что не так?</div>
+                    <textarea placeholder="Опишите ошибку..." value={reportText} onChange={e=>setReportText(e.target.value)} rows={2}
+                      style={{padding:'7px 10px',borderRadius:'7px',border:'1px solid #e2e8f0',fontSize:'12px',resize:'none',outline:'none'}} />
+                    <button onClick={()=>submitReport(s)} disabled={reportLoading||!reportText.trim()}
+                      style={{padding:'8px',borderRadius:'8px',border:'none',background:reportText.trim()?'#dc2626':'#e2e8f0',color:reportText.trim()?'white':'#94a3b8',fontSize:'12px',fontWeight:600,cursor:reportText.trim()?'pointer':'default'}}>
+                      {reportLoading?'Отправляем...':'Отправить'}
+                    </button>
+                  </div>
+                )}
               </div>
-            </a>
+            </div>
           ))}
         </div>
       )}

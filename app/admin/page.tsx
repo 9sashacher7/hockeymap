@@ -72,6 +72,9 @@ export default function AdminPage() {
   const [categories, setCategories] = useState([])
   const [reviewsTab, setReviewsTab] = useState('coaches')
   const [loading, setLoading] = useState(false)
+  const [allCardsTab, setAllCardsTab] = useState('offline')
+  const [allCardsSearch, setAllCardsSearch] = useState('')
+  const [expandedCard, setExpandedCard] = useState<string|null>(null)
   const [message, setMessage] = useState('')
   const [offCat, setOffCat] = useState('')
   const [offSearch, setOffSearch] = useState('')
@@ -102,11 +105,11 @@ export default function AdminPage() {
       sq('people_submissions', 'order=created_at.desc'),
       sq('cities', 'order=name'),
       sq('categories', 'order=name'),
-      sq('places', 'select=id,name,city_id,category_id,featured_until,featured_from,is_top,is_popular,is_network,rating_avg,rating_count,popular_notified&order=name'),
-      sq('online_services', 'select=id,name,category_slug,featured_until,featured_from,is_verified&order=name'),
-      sq('coaches', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
-      sq('hockey_schools', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
-      sq('hockey_camps', 'select=id,name,city_id,featured_until,featured_from,is_verified&order=name'),
+      sq('places', 'select=*,city:cities(name)&order=name'),
+      sq('online_services', 'select=*&order=name'),
+      sq('coaches', 'select=*,city:cities(name)&order=name'),
+      sq('hockey_schools', 'select=*,city:cities(name)&order=name'),
+      sq('hockey_camps', 'select=*,city:cities(name)&order=name'),
       sq('featured_history', 'order=created_at.desc&limit=50'),
       sq('reviews', 'select=id,author_name,rating,text,created_at,is_approved,place_id,coach_id,school_id,camp_id,place:places(name),coach:coaches(name)&order=created_at.desc'),
     ])
@@ -397,6 +400,7 @@ export default function AdminPage() {
     {key:'top',label:'Топ',color:'#f59e0b'},
     {key:'verified',label:'Проверено',color:'#16a34a'},
     {key:'reviews',label:'Отзывы ('+reviews.filter(r=>!r.is_approved).length+')',color:'#7c3aed'},
+    {key:'all_cards',label:'Все карточки',color:'#475569'},
     {key:'badges',label:'Плашки ('+allPlaces.filter(p=>p.popular_notified&&!p.is_popular).length+')',color:'#f59e0b'},
   ]
 
@@ -477,7 +481,9 @@ export default function AdminPage() {
                 {sub.address&&<span>📍 {sub.address}</span>}
                 {sub.phone&&<span>📞 {sub.phone}</span>}
                 {sub.website&&<span>🌐 {sub.website}</span>}
+                {sub.hours&&<span>🕐 {sub.hours}</span>}
                 {sub.description&&<span>💬 {sub.description}</span>}
+                {sub.is_network&&<span>🏙️ Сеть магазинов</span>}
               </div>
             )}
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
@@ -493,6 +499,12 @@ export default function AdminPage() {
             <div style={{fontWeight:700,fontSize:'18px',margin:'8px 0'}}>{sub.name}</div>
             <div style={{fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
               {sub.url&&<span>🌐 <a href={sub.url} target="_blank" rel="noreferrer" style={{color:'#1d4ed8'}}>{sub.url}</a></span>}
+              {sub.city&&<span>📍 {sub.city}</span>}
+              {sub.phone&&<span>📞 {sub.phone}</span>}
+              {sub.social&&<span>🔗 {sub.social}</span>}
+              {sub.delivery&&<span>🚚 Доставка: {sub.delivery}</span>}
+              {sub.payment&&<span>💳 Оплата: {sub.payment}</span>}
+              {sub.specialization&&<span>🏒 Специализация: {sub.specialization}</span>}
               {sub.description&&<span>💬 {sub.description}</span>}
             </div>
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
@@ -512,13 +524,16 @@ export default function AdminPage() {
             </div>
             <div style={{fontWeight:700,fontSize:'18px',marginBottom:'8px'}}>{sub.name}</div>
             <div style={{fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
-              {sub.specialization&&<span>🎯 {sub.specialization}</span>}
-              {sub.experience&&<span>📅 {sub.experience}</span>}
-              {sub.age_from&&<span>👶 {sub.age_from}–{sub.age_to} лет</span>}
-              {sub.dates&&<span>📆 {sub.dates}</span>}
+              {sub.specialization&&<span>🎯 Специализация: {sub.specialization}</span>}
+              {sub.experience&&<span>📅 Опыт: {sub.experience}</span>}
+              {sub.price_per_hour&&<span>💰 Цена: {sub.price_per_hour} руб/час</span>}
+              {sub.age_from&&<span>👶 Возраст: {sub.age_from}–{sub.age_to} лет</span>}
+              {sub.camp_type&&<span>🏕️ Тип: {sub.camp_type}</span>}
+              {sub.dates&&<span>📆 Даты: {sub.dates}</span>}
               {sub.address&&<span>📍 {sub.address}</span>}
               {sub.phone&&<span>📞 {sub.phone}</span>}
               {sub.telegram&&<span>💬 {sub.telegram}</span>}
+              {sub.website&&<span>🌐 {sub.website}</span>}
               {sub.description&&<span>📝 {sub.description}</span>}
             </div>
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
@@ -752,6 +767,156 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab==='all_cards'&&(
+        <div>
+          <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+            {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение']].map(([t,l])=>(
+              <button key={t} onClick={()=>setAllCardsTab(t)} style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:allCardsTab===t?'#475569':'#f1f5f9',color:allCardsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>{l}</button>
+            ))}
+          </div>
+
+          <input placeholder="Поиск по названию, городу, телефону..." value={allCardsSearch} onChange={e=>setAllCardsSearch(e.target.value)}
+            style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none',boxSizing:'border-box',marginBottom:'16px'}} />
+
+          {allCardsTab==='offline'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {allPlaces.filter(p=>{
+                const q = allCardsSearch.toLowerCase()
+                return !q || p.name?.toLowerCase().includes(q) || p.address?.toLowerCase().includes(q) || p.phone?.includes(q)
+              }).map(p=>(
+                <div key={p.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:'15px'}}>{p.name}</div>
+                      <div style={{fontSize:'12px',color:'#94a3b8'}}>{getCityName(p.city_id)}{p.address?' · '+p.address:''}</div>
+                      {p.phone&&<div style={{fontSize:'12px',color:'#64748b'}}>📞 {p.phone}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                      {p.is_verified&&<span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:600}}>✓</span>}
+                      {p.is_top&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:600}}>🏆</span>}
+                      <button onClick={()=>setExpandedCard(expandedCard===p.id?null:p.id)}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
+                        {expandedCard===p.id?'Скрыть':'История'}
+                      </button>
+                      <button onClick={async()=>{if(confirm('Удалить '+p.name+'?')){await sbDelete('places',p.id);setAllPlaces(prev=>prev.filter(x=>x.id!==p.id))}}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                  {expandedCard===p.id&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'12px',color:'#64748b'}}>
+                      <div style={{fontWeight:600,marginBottom:'8px',color:'#374151'}}>История действий:</div>
+                      {history.filter(h=>h.place_id===p.id).length===0
+                        ? <div>История пуста</div>
+                        : history.filter(h=>h.place_id===p.id).map(h=>(
+                          <div key={h.id} style={{padding:'6px 0',borderBottom:'1px solid #e2e8f0'}}>
+                            <span style={{color:'#1d4ed8',fontWeight:600}}>{h.action||'Действие'}</span> · {new Date(h.created_at).toLocaleString('ru-RU')}
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {allCardsTab==='online'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {allServices.filter(s=>{
+                const q = allCardsSearch.toLowerCase()
+                return !q || s.name?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.phone?.includes(q)
+              }).map(s=>(
+                <div key={s.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:'15px'}}>{s.name}</div>
+                      <div style={{fontSize:'12px',color:'#94a3b8'}}>{s.category_slug}{s.city?' · '+s.city:''}</div>
+                      {s.url&&<div style={{fontSize:'12px',color:'#1d4ed8'}}>{s.url}</div>}
+                      {s.phone&&<div style={{fontSize:'12px',color:'#64748b'}}>📞 {s.phone}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:'6px'}}>
+                      <button onClick={()=>setExpandedCard(expandedCard===('o'+s.id)?null:('o'+s.id))}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
+                        {expandedCard===('o'+s.id)?'Скрыть':'Подробнее'}
+                      </button>
+                      <button onClick={async()=>{if(confirm('Удалить '+s.name+'?')){await sbDelete('online_services',s.id);setAllServices(prev=>prev.filter(x=>x.id!==s.id))}}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                  {expandedCard===('o'+s.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
+                      {s.description&&<div>💬 {s.description}</div>}
+                      {s.city&&<div>📍 {s.city}</div>}
+                      {s.phone&&<div>📞 {s.phone}</div>}
+                      {s.social&&<div>🔗 {s.social}</div>}
+                      {s.delivery&&<div>🚚 Доставка: {s.delivery}</div>}
+                      {s.payment&&<div>💳 Оплата: {s.payment}</div>}
+                      {s.specialization&&<div>🏒 {s.specialization}</div>}
+                      {s.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {allCardsTab==='people'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {[...allCoaches.map(c=>({...c,_type:'coach'})),...allSchools.map(s=>({...s,_type:'school'})),...allCamps.map(c=>({...c,_type:'camp'}))].filter(p=>{
+                const q = allCardsSearch.toLowerCase()
+                return !q || p.name?.toLowerCase().includes(q) || p.city?.name?.toLowerCase().includes(q) || p.phone?.includes(q)
+              }).map(p=>(
+                <div key={p._type+p.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:'15px'}}>{p.name}</div>
+                      <div style={{fontSize:'12px',color:'#94a3b8'}}>{p._type==='coach'?'Тренер':p._type==='school'?'Школа':'Лагерь'}{p.city?' · '+p.city.name:''}</div>
+                      {p.phone&&<div style={{fontSize:'12px',color:'#64748b'}}>📞 {p.phone}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:'6px'}}>
+                      <button onClick={()=>setExpandedCard(expandedCard===('p'+p._type+p.id)?null:('p'+p._type+p.id))}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
+                        {expandedCard===('p'+p._type+p.id)?'Скрыть':'Подробнее'}
+                      </button>
+                      <button onClick={async()=>{
+                        const table = p._type==='coach'?'coaches':p._type==='school'?'hockey_schools':'hockey_camps'
+                        if(confirm('Удалить '+p.name+'?')){await sbDelete(table,p.id);
+                          if(p._type==='coach') setAllCoaches(prev=>prev.filter(x=>x.id!==p.id))
+                          else if(p._type==='school') setAllSchools(prev=>prev.filter(x=>x.id!==p.id))
+                          else setAllCamps(prev=>prev.filter(x=>x.id!==p.id))
+                        }
+                      }}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                  {expandedCard===('p'+p._type+p.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
+                      {p.specialization&&<div>🎯 Специализация: {p.specialization}</div>}
+                      {p.experience&&<div>📅 Опыт: {p.experience}</div>}
+                      {p.price_per_hour&&<div>💰 Цена: {p.price_per_hour} руб/час</div>}
+                      {p.age_from&&<div>👶 Возраст: {p.age_from}–{p.age_to} лет</div>}
+                      {p.camp_type&&<div>🏕️ Тип: {p.camp_type}</div>}
+                      {p.dates&&<div>📆 Даты: {p.dates}</div>}
+                      {p.address&&<div>📍 {p.address}</div>}
+                      {p.telegram&&<div>💬 {p.telegram}</div>}
+                      {p.website&&<div>🌐 {p.website}</div>}
+                      {p.description&&<div>📝 {p.description}</div>}
+                      {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

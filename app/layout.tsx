@@ -35,7 +35,16 @@ export default function RootLayout({
       lang="ru"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <footer style={{borderTop:'1px solid #e2e8f0',padding:'20px',textAlign:'center',fontSize:'13px',color:'#94a3b8',marginTop:'auto'}}>
+          <div style={{maxWidth:'900px',margin:'0 auto',display:'flex',gap:'16px',justifyContent:'center',flexWrap:'wrap',alignItems:'center'}}>
+            <span>© 2026 HockeyMap</span>
+            <a href="/privacy" style={{color:'#64748b',textDecoration:'none'}}>Политика конфиденциальности</a>
+            <a href="/contact" style={{color:'#64748b',textDecoration:'none'}}>Написать нам</a>
+          </div>
+        </footer>
+      </body>
     </html>
   );
 }
