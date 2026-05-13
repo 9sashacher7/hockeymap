@@ -140,13 +140,27 @@ export default function AdminPage() {
 
     // Редактирование существующего места
     if (sub.type === 'edit' && sub.place_id) {
+      let cityId = sub.city_id
+      if (!cityId && sub.custom_city) {
+        const slug = slugify(sub.custom_city)
+        const cityRes = await fetch(`${SURL}/rest/v1/cities`, {
+          method: 'POST',
+          headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+          body: JSON.stringify({ name: sub.custom_city, slug })
+        })
+        const cityData = await cityRes.json()
+        cityId = Array.isArray(cityData) ? cityData[0]?.id : cityData?.id
+      }
       const ok = await sbPatch('places', sub.place_id, {
         name: sub.name||undefined,
+        city_id: cityId||undefined,
+        category_id: sub.category_id||undefined,
         address: sub.address||null,
         phone: sub.phone||null,
         website: sub.website||null,
         hours: sub.hours?{info:sub.hours}:null,
         description: sub.description||null,
+        is_network: sub.is_network||false,
       })
       if (ok) { await sbDelete('submissions', sub.id); setMessage('Место обновлено'); loadData() }
       else setMessage('Ошибка')
@@ -192,6 +206,7 @@ export default function AdminPage() {
       name: sub.name, type: 'other', url: sub.url||null,
       description: sub.description||null, category_slug: sub.category_slug||null,
       city: sub.city||null, specialization: sub.specialization||null, delivery: sub.delivery||null, payment: sub.payment||null,
+      phone: sub.phone||null, social: sub.social||null,
       is_verified: false, is_featured: false, subscribers_count: null,
     })
     if (ok) { await sbDelete('online_submissions', sub.id); setMessage('Сервис добавлен'); loadData() }
@@ -799,9 +814,9 @@ export default function AdminPage() {
                     <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
                       {p.is_verified&&<span style={{background:'#dcfce7',color:'#16a34a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:600}}>✓</span>}
                       {p.is_top&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:600}}>🏆</span>}
-                      <button onClick={()=>setExpandedCard(expandedCard===p.id?null:p.id)}
+                      <button onClick={()=>setExpandedCard(expandedCard===('d'+p.id)?null:('d'+p.id))}
                         style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
-                        {expandedCard===p.id?'Скрыть':'История'}
+                        {expandedCard===('d'+p.id)?'Скрыть':'Подробнее'}
                       </button>
                       <button onClick={async()=>{if(confirm('Удалить '+p.name+'?')){await sbDelete('places',p.id);setAllPlaces(prev=>prev.filter(x=>x.id!==p.id))}}}
                         style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
@@ -809,17 +824,17 @@ export default function AdminPage() {
                       </button>
                     </div>
                   </div>
-                  {expandedCard===p.id&&(
-                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'12px',color:'#64748b'}}>
-                      <div style={{fontWeight:600,marginBottom:'8px',color:'#374151'}}>История действий:</div>
-                      {history.filter(h=>h.place_id===p.id).length===0
-                        ? <div>История пуста</div>
-                        : history.filter(h=>h.place_id===p.id).map(h=>(
-                          <div key={h.id} style={{padding:'6px 0',borderBottom:'1px solid #e2e8f0'}}>
-                            <span style={{color:'#1d4ed8',fontWeight:600}}>{h.action||'Действие'}</span> · {new Date(h.created_at).toLocaleString('ru-RU')}
-                          </div>
-                        ))
-                      }
+                  {expandedCard===('d'+p.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
+                      {p.address&&<div>📍 {p.address}</div>}
+                      {p.phone&&<div>📞 {p.phone}</div>}
+                      {p.website&&<div>🌐 {p.website}</div>}
+                      {p.hours&&<div>🕐 {typeof p.hours==='object'?p.hours.info:p.hours}</div>}
+                      {p.description&&<div>💬 {p.description}</div>}
+                      {p.rating_avg>0&&<div>⭐ Рейтинг: {p.rating_avg} ({p.rating_count} отз.)</div>}
+                      {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
+                      {p.is_top&&<div style={{color:'#854d0e',fontWeight:600}}>🏆 Топ магазин</div>}
+                      {p.is_network&&<div style={{color:'#16a34a',fontWeight:600}}>🏙️ Сеть магазинов</div>}
                     </div>
                   )}
                 </div>
