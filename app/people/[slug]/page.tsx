@@ -70,12 +70,14 @@ function ReviewForm({ itemId, idField, onSuccess }) {
   async function submit() {
     if (!name || !rating) return
     setLoading(true)
-    const ok = await sbPost('reviews', {
-      author_name: name,
-      rating,
-      text: text || null,
-      [idField]: itemId,
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author_name: name, rating, text: text || null, [idField]: itemId })
     })
+    const data = await res.json()
+    if (data.error) { alert(data.error); setLoading(false); return }
+    const ok = res.ok
     if (ok) { setDone(true); onSuccess() }
     setLoading(false)
   }
