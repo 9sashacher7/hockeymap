@@ -134,7 +134,8 @@ function ItemCard({ item, idField, cat }) {
         target_id: item.id,
         people_type: idField === 'coach_id' ? 'coach' : idField === 'school_id' ? 'school' : 'camp',
         name: item.name,
-        description: (()=>{
+        ...changed,
+        change_summary: (()=>{
           const labels = {name:'Имя',phone:'Телефон',website:'Сайт',address:'Адрес',description:'Описание',specialization:'Специализация',experience:'Опыт',price_per_hour:'Цена (руб/час)',age_from:'Возраст от',age_to:'Возраст до',dates:'Даты'}
           return Object.entries(changed).map(function(e){
             const label = labels[e[0]]||e[0]

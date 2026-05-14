@@ -223,6 +223,8 @@ export default function AdminPage() {
     if (sub.type === 'edit' && sub.people_type) {
       const table = sub.people_type==='coach'?'coaches':sub.people_type==='school'?'hockey_schools':'hockey_camps'
       const fields = ['name','phone','telegram','website','address','description','specialization','experience','price_per_hour','age_from','age_to','dates','price']
+      // Для edit не перезаписываем description историей изменений
+      if (sub.type === 'edit') fields.splice(fields.indexOf('description'), 1)
       const patch: any = {}
       fields.forEach(f => { if (sub[f] !== undefined && sub[f] !== null && sub[f] !== '') patch[f] = sub[f] })
       if (Object.keys(patch).length > 0 && sub.target_id) {
@@ -554,8 +556,9 @@ export default function AdminPage() {
           <SubCard key={sub.id} sub={sub} onApprove={()=>approvePeople(sub)} onReject={()=>reject(sub,'people_submissions')}>
             <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap'}}>
               <span style={{background:'#e0f2fe',color:'#0891b2',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:600}}>
-                {sub.type==='coach'?'Тренер':sub.type==='school'?'Школа/секция':'Сбор/лагерь'}
+                {(sub.people_type||sub.type)==='coach'?'Тренер':(sub.people_type||sub.type)==='school'?'Школа/секция':'Сбор/лагерь'}
               </span>
+              {sub.type==='edit'&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:700}}>✏️ Редактирование {(sub.people_type)==='coach'?'тренера':sub.people_type==='school'?'школы':'лагеря'}</span>}
               {sub.custom_city&&<span style={{background:'#fef9c3',color:'#854d0e',borderRadius:'6px',padding:'2px 10px',fontSize:'12px'}}>Новый город: {sub.custom_city}</span>}
             </div>
             <div style={{fontWeight:700,fontSize:'18px',marginBottom:'8px'}}>{sub.name}</div>
@@ -571,7 +574,8 @@ export default function AdminPage() {
               {sub.phone&&<span>📞 <a href={'tel:'+sub.phone} style={{color:'#1d4ed8'}}>{sub.phone}</a></span>}
               {sub.telegram&&<span>💬 <a href={sub.telegram.startsWith('http')?sub.telegram:'https://t.me/'+sub.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{sub.telegram}</a></span>}
               {sub.website&&<span>🌐 <a href={sub.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{sub.website}</a></span>}
-              {sub.description&&<span>📝 {sub.description}</span>}
+              {sub.type==='edit'&&sub.change_summary&&<span>📝 {sub.change_summary}</span>}
+              {sub.type!=='edit'&&sub.description&&<span>📝 {sub.description}</span>}
             </div>
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
           </SubCard>
