@@ -157,6 +157,10 @@ export default function AddPeoplePage() {
           </>}
 
           {inp('address', 'Адрес')}
+          <div style={{position:'relative'}}>
+            {inp('price', 'Стоимость')}
+            <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>Стоимость указывайте за полный период. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
+          </div>
           {inp('phone', 'Телефон')}
           {inp('telegram', 'Ссылка для связи — Telegram, WhatsApp, VK и др. (для кнопки Написать)')}
           {inp('website', 'Сайт')}

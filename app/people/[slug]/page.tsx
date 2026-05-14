@@ -126,11 +126,12 @@ function ItemCard({ item, idField, cat }) {
         changed[f] = editForm[f]
       }
     })
-    await fetch(`${SURL}/rest/v1/submissions`, {
+    await fetch(`${SURL}/rest/v1/people_submissions`, {
       method: 'POST',
       headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
       body: JSON.stringify({
         type: 'edit',
+        target_id: item.id,
         people_type: idField === 'coach_id' ? 'coach' : idField === 'school_id' ? 'school' : 'camp',
         name: item.name,
         description: (()=>{
@@ -150,7 +151,7 @@ function ItemCard({ item, idField, cat }) {
 
   async function submitReport() {
     setReportLoading(true)
-    await fetch(`${SURL}/rest/v1/submissions`, {
+    await fetch(`${SURL}/rest/v1/people_submissions`, {
       method: 'POST',
       headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
       body: JSON.stringify({
@@ -205,8 +206,9 @@ function ItemCard({ item, idField, cat }) {
             {item.experience&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Опыт:</span> {item.experience}</div>}
             {item.price_per_hour&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Цена:</span> <span style={{fontWeight:800,color:'#1d4ed8'}}>{parseInt(item.price_per_hour).toLocaleString('ru-RU')} руб/час</span></div>}
             {item.age_from&&item.age_to&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Возраст:</span> {item.age_from}–{item.age_to} лет</div>}
-            {item.camp_type&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Тип:</span> {item.camp_type}</div>}
+            {item.camp_type&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Тип:</span> {({'children':'Детский','adult':'Взрослый','mixed':'Смешанный','amateur':'Любительский','professional':'Профессиональный'})[item.camp_type]||item.camp_type}</div>}
             {item.dates&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Даты:</span> {item.dates}</div>}
+            {item.price&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Стоимость:</span> {item.price}</div>}
             {item.address&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Адрес:</span> {item.address}</div>}
             {item.description&&<div style={{fontSize:'13px',color:'#64748b',marginTop:'4px'}}><span style={{fontWeight:700,color:'#0f172a'}}>О себе:</span> {item.description}</div>}
           </div>

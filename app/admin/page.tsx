@@ -75,6 +75,8 @@ export default function AdminPage() {
   const [allCardsTab, setAllCardsTab] = useState('offline')
   const [allCardsSearch, setAllCardsSearch] = useState('')
   const [expandedCard, setExpandedCard] = useState<string|null>(null)
+  const [editingCard, setEditingCard] = useState<string|null>(null)
+  const [editCardForm, setEditCardForm] = useState<any>({})
   const [message, setMessage] = useState('')
   const [offCat, setOffCat] = useState('')
   const [offSearch, setOffSearch] = useState('')
@@ -216,6 +218,25 @@ export default function AdminPage() {
 
   async function approvePeople(sub) {
     setLoading(true)
+
+    // Редактирование существующей записи
+    if (sub.type === 'edit' && sub.people_type) {
+      const table = sub.people_type==='coach'?'coaches':sub.people_type==='school'?'hockey_schools':'hockey_camps'
+      const fields = ['name','phone','telegram','website','address','description','specialization','experience','price_per_hour','age_from','age_to','dates','price']
+      const patch: any = {}
+      fields.forEach(f => { if (sub[f] !== undefined && sub[f] !== null && sub[f] !== '') patch[f] = sub[f] })
+      if (Object.keys(patch).length > 0 && sub.target_id) {
+        const ok = await sbPatch(table, sub.target_id, patch)
+        if (ok) { await sbDelete('people_submissions', sub.id); setMessage('Обновлено'); loadData() }
+        else setMessage('Ошибка')
+      } else {
+        await sbDelete('people_submissions', sub.id)
+        setMessage('Принято к сведению'); loadData()
+      }
+      setLoading(false)
+      return
+    }
+
     let cityId = sub.city_id
     if (!cityId && sub.custom_city) {
       const slug = slugify(sub.custom_city)
@@ -229,13 +250,13 @@ export default function AdminPage() {
     }
     const slug = slugify(sub.name) + '-' + sub.id
     let table = 'coaches'
-    let data = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, description: sub.description||null, is_verified: true, is_featured: false }
+    let data: any = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
     if (sub.type === 'school') {
       table = 'hockey_schools'
-      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
+      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
     } else if (sub.type === 'camp') {
       table = 'hockey_camps'
-      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, camp_type: sub.camp_type||null, dates: sub.dates||null, phone: sub.phone||null, website: sub.website||null, description: sub.description||null, is_verified: true, is_featured: false }
+      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, camp_type: sub.camp_type||null, dates: sub.dates||null, price: sub.price||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
     }
     const ok = await sbPost(table, data)
     if (ok) { await sbDelete('people_submissions', sub.id); setMessage('Добавлено'); loadData() }
@@ -543,12 +564,13 @@ export default function AdminPage() {
               {sub.experience&&<span>📅 Опыт: {sub.experience}</span>}
               {sub.price_per_hour&&<span>💰 Цена: {sub.price_per_hour} руб/час</span>}
               {sub.age_from&&<span>👶 Возраст: {sub.age_from}–{sub.age_to} лет</span>}
-              {sub.camp_type&&<span>🏕️ Тип: {sub.camp_type}</span>}
+              {sub.camp_type&&<span>🏕️ Тип: {({'children':'Детский','adult':'Взрослый','mixed':'Смешанный','amateur':'Любительский','professional':'Профессиональный'})[sub.camp_type]||sub.camp_type}</span>}
               {sub.dates&&<span>📆 Даты: {sub.dates}</span>}
+              {sub.price&&<span>💵 Стоимость: {sub.price}</span>}
               {sub.address&&<span>📍 {sub.address}</span>}
-              {sub.phone&&<span>📞 {sub.phone}</span>}
-              {sub.telegram&&<span>💬 {sub.telegram}</span>}
-              {sub.website&&<span>🌐 {sub.website}</span>}
+              {sub.phone&&<span>📞 <a href={'tel:'+sub.phone} style={{color:'#1d4ed8'}}>{sub.phone}</a></span>}
+              {sub.telegram&&<span>💬 <a href={sub.telegram.startsWith('http')?sub.telegram:'https://t.me/'+sub.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{sub.telegram}</a></span>}
+              {sub.website&&<span>🌐 <a href={sub.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{sub.website}</a></span>}
               {sub.description&&<span>📝 {sub.description}</span>}
             </div>
             {(sub.submitter_name||sub.submitter_contact)&&<div style={{marginTop:'8px',padding:'8px',background:'#f8fafc',borderRadius:'8px',fontSize:'12px',color:'#94a3b8'}}>От: {sub.submitter_name||'—'} {sub.submitter_contact?'· '+sub.submitter_contact:''}</div>}
@@ -818,12 +840,31 @@ export default function AdminPage() {
                         style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
                         {expandedCard===('d'+p.id)?'Скрыть':'Подробнее'}
                       </button>
+                      <button onClick={()=>{setEditingCard(editingCard===('d'+p.id)?null:('d'+p.id));setEditCardForm({name:p.name,address:p.address||'',phone:p.phone||'',website:p.website||'',description:p.description||'',hours:p.hours?.info||p.hours||''})}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #1d4ed8',background:editingCard===('d'+p.id)?'#1d4ed8':'white',color:editingCard===('d'+p.id)?'white':'#1d4ed8',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        ✏️
+                      </button>
                       <button onClick={async()=>{if(confirm('Удалить '+p.name+'?')){await sbDelete('places',p.id);setAllPlaces(prev=>prev.filter(x=>x.id!==p.id))}}}
                         style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
                         Удалить
                       </button>
                     </div>
                   </div>
+                  {editingCard===('d'+p.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'16px',background:'#f0f9ff',display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <div style={{fontWeight:600,fontSize:'13px',marginBottom:'4px'}}>Редактировать место</div>
+                      {[['name','Название'],['address','Адрес'],['phone','Телефон'],['website','Сайт'],['hours','Часы работы'],['description','Описание']].map(([f,pl])=>(
+                        <input key={f} placeholder={pl} value={editCardForm[f]||''} onChange={e=>setEditCardForm(prev=>({...prev,[f]:e.target.value}))}
+                          style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #bfdbfe',fontSize:'13px',outline:'none'}} />
+                      ))}
+                      <button onClick={async()=>{
+                        const ok = await sbPatch('places',p.id,{name:editCardForm.name,address:editCardForm.address||null,phone:editCardForm.phone||null,website:editCardForm.website||null,hours:editCardForm.hours?{info:editCardForm.hours}:null,description:editCardForm.description||null})
+                        if(ok){setMessage('✅ Место обновлено');setEditingCard(null);loadData()}else setMessage('❌ Ошибка')
+                      }} style={{padding:'8px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'13px',fontWeight:600,cursor:'pointer'}}>
+                        Сохранить
+                      </button>
+                    </div>
+                  )}
                   {expandedCard===('d'+p.id)&&(
                     <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
                       {p.address&&<div>📍 {p.address}</div>}
@@ -861,12 +902,31 @@ export default function AdminPage() {
                         style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
                         {expandedCard===('o'+s.id)?'Скрыть':'Подробнее'}
                       </button>
+                      <button onClick={()=>{setEditingCard(editingCard===('o'+s.id)?null:('o'+s.id));setEditCardForm({name:s.name,url:s.url||'',city:s.city||'',phone:s.phone||'',social:s.social||'',description:s.description||''})}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #1d4ed8',background:editingCard===('o'+s.id)?'#1d4ed8':'white',color:editingCard===('o'+s.id)?'white':'#1d4ed8',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        ✏️
+                      </button>
                       <button onClick={async()=>{if(confirm('Удалить '+s.name+'?')){await sbDelete('online_services',s.id);setAllServices(prev=>prev.filter(x=>x.id!==s.id))}}}
                         style={{padding:'6px 12px',borderRadius:'8px',border:'none',background:'#fee2e2',color:'#dc2626',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
                         Удалить
                       </button>
                     </div>
                   </div>
+                  {editingCard===('o'+s.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'16px',background:'#f0f9ff',display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <div style={{fontWeight:600,fontSize:'13px',marginBottom:'4px'}}>Редактировать сервис</div>
+                      {[['name','Название'],['url','Ссылка'],['city','Город'],['phone','Телефон'],['social','Соцсети'],['description','Описание']].map(([f,pl])=>(
+                        <input key={f} placeholder={pl} value={editCardForm[f]||''} onChange={e=>setEditCardForm(prev=>({...prev,[f]:e.target.value}))}
+                          style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #bfdbfe',fontSize:'13px',outline:'none'}} />
+                      ))}
+                      <button onClick={async()=>{
+                        const ok = await sbPatch('online_services',s.id,{name:editCardForm.name,url:editCardForm.url||null,city:editCardForm.city||null,phone:editCardForm.phone||null,social:editCardForm.social||null,description:editCardForm.description||null})
+                        if(ok){setMessage('✅ Сервис обновлён');setEditingCard(null);loadData()}else setMessage('❌ Ошибка')
+                      }} style={{padding:'8px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'13px',fontWeight:600,cursor:'pointer'}}>
+                        Сохранить
+                      </button>
+                    </div>
+                  )}
                   {expandedCard===('o'+s.id)&&(
                     <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
                       {s.description&&<div>💬 {s.description}</div>}
@@ -902,6 +962,10 @@ export default function AdminPage() {
                         style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
                         {expandedCard===('p'+p._type+p.id)?'Скрыть':'Подробнее'}
                       </button>
+                      <button onClick={()=>{setEditingCard(editingCard===('p'+p._type+p.id)?null:('p'+p._type+p.id));setEditCardForm({name:p.name,phone:p.phone||'',telegram:p.telegram||'',website:p.website||'',address:p.address||'',description:p.description||'',specialization:p.specialization||'',experience:p.experience||'',price_per_hour:p.price_per_hour||'',age_from:p.age_from||'',age_to:p.age_to||'',dates:p.dates||'',price:p.price||''})}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #1d4ed8',background:editingCard===('p'+p._type+p.id)?'#1d4ed8':'white',color:editingCard===('p'+p._type+p.id)?'white':'#1d4ed8',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
+                        ✏️
+                      </button>
                       <button onClick={async()=>{
                         const table = p._type==='coach'?'coaches':p._type==='school'?'hockey_schools':'hockey_camps'
                         if(confirm('Удалить '+p.name+'?')){await sbDelete(table,p.id);
@@ -915,17 +979,48 @@ export default function AdminPage() {
                       </button>
                     </div>
                   </div>
+                  {editingCard===('p'+p._type+p.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'16px',background:'#f0f9ff',display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <div style={{fontWeight:600,fontSize:'13px',marginBottom:'4px'}}>Редактировать</div>
+                      {[
+                        ['name','Название/Имя'],
+                        ['phone','Телефон'],
+                        ['telegram','Telegram/WhatsApp'],
+                        ['website','Сайт'],
+                        ['address','Адрес'],
+                        ...(p._type==='coach'?[['specialization','Специализация'],['experience','Опыт'],['price_per_hour','Цена за час (руб)']]: []),
+                        ...(p._type!=='coach'?[['age_from','Возраст от'],['age_to','Возраст до']]: []),
+                        ...(p._type==='camp'?[['dates','Даты'],['price','Стоимость']]: []),
+                        ['description','Описание'],
+                      ].map(([f,pl])=>(
+                        <input key={f} placeholder={pl} value={editCardForm[f]||''} onChange={e=>setEditCardForm(prev=>({...prev,[f]:e.target.value}))}
+                          style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #bfdbfe',fontSize:'13px',outline:'none'}} />
+                      ))}
+                      <button onClick={async()=>{
+                        const table = p._type==='coach'?'coaches':p._type==='school'?'hockey_schools':'hockey_camps'
+                        let patchData: any = {name:editCardForm.name||null,phone:editCardForm.phone||null,telegram:editCardForm.telegram||null,website:editCardForm.website||null,address:editCardForm.address||null,description:editCardForm.description||null}
+                        if(p._type==='coach') patchData = {...patchData,specialization:editCardForm.specialization||null,experience:editCardForm.experience||null,price_per_hour:editCardForm.price_per_hour||null}
+                        if(p._type!=='coach') patchData = {...patchData,age_from:editCardForm.age_from?parseInt(editCardForm.age_from):null,age_to:editCardForm.age_to?parseInt(editCardForm.age_to):null}
+                        if(p._type==='camp') patchData = {...patchData,dates:editCardForm.dates||null,price:editCardForm.price||null,camp_type:editCardForm.camp_type||null}
+                        const ok = await sbPatch(table,p.id,patchData)
+                        if(ok){setMessage('✅ Обновлено');setEditingCard(null);loadData()}else setMessage('❌ Ошибка')
+                      }} style={{padding:'8px',borderRadius:'8px',border:'none',background:'#1d4ed8',color:'white',fontSize:'13px',fontWeight:600,cursor:'pointer'}}>
+                        Сохранить
+                      </button>
+                    </div>
+                  )}
                   {expandedCard===('p'+p._type+p.id)&&(
                     <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
                       {p.specialization&&<div>🎯 Специализация: {p.specialization}</div>}
                       {p.experience&&<div>📅 Опыт: {p.experience}</div>}
                       {p.price_per_hour&&<div>💰 Цена: {p.price_per_hour} руб/час</div>}
                       {p.age_from&&<div>👶 Возраст: {p.age_from}–{p.age_to} лет</div>}
-                      {p.camp_type&&<div>🏕️ Тип: {p.camp_type}</div>}
+                      {p.camp_type&&<div>🏕️ Тип: {({'children':'Детский','adult':'Взрослый','mixed':'Смешанный','amateur':'Любительский','professional':'Профессиональный'})[p.camp_type]||p.camp_type}</div>}
+                      {p.price&&<div>💵 Стоимость: {p.price}</div>}
                       {p.dates&&<div>📆 Даты: {p.dates}</div>}
                       {p.address&&<div>📍 {p.address}</div>}
-                      {p.telegram&&<div>💬 {p.telegram}</div>}
-                      {p.website&&<div>🌐 {p.website}</div>}
+                      {p.telegram&&<div>💬 <a href={p.telegram.startsWith('http')?p.telegram:'https://t.me/'+p.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{p.telegram}</a></div>}
+                      {p.website&&<div>🌐 <a href={p.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{p.website}</a></div>}
                       {p.description&&<div>📝 {p.description}</div>}
                       {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
                     </div>
