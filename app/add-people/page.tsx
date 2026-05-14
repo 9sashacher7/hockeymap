@@ -158,7 +158,7 @@ export default function AddPeoplePage() {
 
           {inp('address', 'Адрес')}
           {inp('phone', 'Телефон')}
-          {inp('telegram', 'Telegram — @username или ссылка t.me/username (для кнопки Написать)')}
+          {inp('telegram', 'Ссылка для связи — Telegram, WhatsApp, VK и др. (для кнопки Написать)')}
           {inp('website', 'Сайт')}
 
           <textarea placeholder="Описание" value={form.description} onChange={e=>set('description',e.target.value)} rows={3}

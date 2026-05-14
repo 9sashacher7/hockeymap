@@ -179,7 +179,22 @@ export default function OnlineCategoryPage() {
                   {s.payment&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Оплата:</span> {s.payment}</div>}
                 </div>
                 {s.phone&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>📞</span> <a href={'tel:'+s.phone} style={{color:'#1d4ed8',textDecoration:'none'}}>{s.phone}</a></div>}
-                {s.social&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>🔗</span> <a href={s.social} target="_blank" rel="noreferrer" style={{color:'#1d4ed8',textDecoration:'none'}}>{s.social}</a></div>}
+                {s.social&&(
+                  <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                    {s.social.split('\n').filter((l:string)=>l.trim()).map((line:string,i:number)=>{
+                      const parts = line.split(/: (.+)/)
+                      const hasName = parts.length >= 2
+                      const label = hasName ? parts[0] : '🔗 Соцсеть'
+                      const url = hasName ? parts[1] : line
+                      return (
+                        <div key={i} style={{fontSize:'13px',color:'#64748b'}}>
+                          <span style={{fontWeight:700,color:'#0f172a'}}>{label}:</span>{' '}
+                          <a href={url} target="_blank" rel="noreferrer" style={{color:'#1d4ed8',textDecoration:'none'}}>{url}</a>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
 
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:'12px',borderTop:'1px solid #f1f5f9',marginTop:'auto'}}>
                   {s.subscribers_count

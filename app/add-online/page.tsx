@@ -31,6 +31,8 @@ export default function AddOnlinePage() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [socials, setSocials] = useState([{name:'',url:''}])
+
   const [form, setForm] = useState({
     name: '', category_slug: '', url: '', description: '',
     city: '', phone: '', social: '',
@@ -45,7 +47,8 @@ export default function AddOnlinePage() {
   async function handleSubmit() {
     if (!form.name || !form.category_slug || !form.url) return
     setLoading(true)
-    const ok = await post('online_submissions', form)
+    const socialsStr = socials.filter(s => s.url.trim()).map(s => s.name ? s.name+': '+s.url : s.url).join('\n')
+    const ok = await post('online_submissions', {...form, social: socialsStr || form.social})
     setLoading(false)
     if (ok) setDone(true)
   }
@@ -127,6 +130,48 @@ export default function AddOnlinePage() {
             <option value="Детское">Детское</option>
           </select>
         </>}
+
+        {form.category_slug === 'poleznoe' && (
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            <div style={{fontSize:'12px',color:'#64748b',fontWeight:600}}>Социальные сети</div>
+            {socials.map((s, i) => (
+              <div key={i} style={{display:'flex',gap:'8px'}}>
+                <input
+                  placeholder='Название (VK, TG...)'
+                  value={s.name}
+                  onChange={e => {
+                    const next = [...socials]
+                    next[i] = {...next[i], name: e.target.value}
+                    setSocials(next)
+                  }}
+                  style={{width:'130px',padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',boxSizing:'border-box',outline:'none',flexShrink:0}}
+                />
+                <input
+                  placeholder='Ссылка'
+                  value={s.url}
+                  onChange={e => {
+                    const next = [...socials]
+                    next[i] = {...next[i], url: e.target.value}
+                    setSocials(next)
+                  }}
+                  style={{flex:1,padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',boxSizing:'border-box',outline:'none'}}
+                />
+                {socials.length > 1 && (
+                  <button onClick={() => setSocials(socials.filter((_, j) => j !== i))} type='button'
+                    style={{padding:'8px 12px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',color:'#dc2626',cursor:'pointer',fontSize:'14px'}}>
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {socials.length < 5 && (
+              <button onClick={() => setSocials([...socials, {name:'',url:''}])} type='button'
+                style={{padding:'8px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',color:'#1d4ed8',fontWeight:600,fontSize:'13px',cursor:'pointer',alignSelf:'flex-start'}}>
+                + Добавить соцсеть
+              </button>
+            )}
+          </div>
+        )}
 
         <textarea
           placeholder="Описание"
