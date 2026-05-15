@@ -204,13 +204,13 @@ export default function OnlineCategoryPage() {
                   {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600,textDecoration:'none'}}>Перейти →</a>}
                 </div>
 
-                <div style={{display:'flex',gap:'6px',marginTop:'10px',flexWrap:'wrap'}}>
+                <div style={{display:'flex',gap:'6px',marginTop:'10px'}}>
                   <button onClick={()=>{navigator.clipboard.writeText(window.location.href+'#service-'+s.id);alert('Ссылка скопирована!')}}
-                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#64748b'}}>🔗 Поделиться</button>
+                    style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>🔗</button>
                   <button onClick={()=>{setEditId(editId===s.id?null:s.id);setEditForm({});setReportId(null)}}
-                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#374151'}}>✏️ Редактировать</button>
+                    style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #e2e8f0',background:editId===s.id?'#f1f5f9':'white',fontSize:'13px',cursor:'pointer',color:'#374151'}}>✏️ Редактировать</button>
                   <button onClick={()=>{setReportId(reportId===s.id?null:s.id);setReportText('');setEditId(null)}}
-                    style={{flex:1,padding:'7px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'12px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>⚠️ Ошибка</button>
+                    style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',cursor:'pointer',color:'#dc2626'}}>⚠️</button>
                 </div>
 
                 {editDone===s.id&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'8px 12px',fontSize:'12px',color:'#16a34a',marginTop:'6px'}}>✓ Изменения отправлены на проверку</div>}

@@ -244,12 +244,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
                     <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
                       <button onClick={()=>{setEditId(editId===place.id?null:place.id);setEditForm({});setReportId(null)}}
-                        style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#374151'}}>
+                        style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #e2e8f0',background:editId===place.id?'#f1f5f9':'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#374151'}}>
                         ✏️ Редактировать
                       </button>
                       <button onClick={()=>{setReportId(reportId===place.id?null:place.id);setReportText('');setEditId(null)}}
-                        style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>
-                        ⚠️ Сообщить об ошибке
+                        style={{padding:'9px 14px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',cursor:'pointer',color:'#dc2626'}}>
+                        ⚠️
                       </button>
                     </div>
 
