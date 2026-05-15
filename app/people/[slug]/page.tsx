@@ -216,33 +216,37 @@ function ItemCard({ item, idField, cat }) {
             {item.description&&<div style={{fontSize:'13px',color:'#64748b',marginTop:'4px'}}><span style={{fontWeight:700,color:'#0f172a'}}>О себе:</span> {item.description}</div>}
           </div>
 
-          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'8px'}}>
-            {reviews.length>0&&(
-              <button onClick={()=>setShowReviews(!showReviews)}
-                style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#475569'}}>
-                {showReviews?'Скрыть отзывы':'Отзывы ('+reviews.length+')'}
+          <div style={{marginTop:'12px',display:'flex',flexDirection:'column',gap:'8px'}}>
+            <div style={{display:'flex',gap:'8px'}}>
+              <button onClick={()=>setShowForm(!showForm)}
+                style={{flex:1,padding:'10px',borderRadius:'10px',border:'none',background:showForm?'#1d4ed8':'#1d4ed8',color:'white',fontSize:'14px',fontWeight:600,cursor:'pointer'}}>
+                {showForm?'Отмена':'+ Оставить отзыв'}
               </button>
-            )}
-            <button onClick={()=>setShowForm(!showForm)}
-              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #1d4ed8',background:showForm?'#1d4ed8':'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:showForm?'white':'#1d4ed8'}}>
-              {showForm?'Отмена':'+ Отзыв'}
-            </button>
-            <button onClick={()=>{
-                const url = window.location.origin + window.location.pathname + '#coach-' + item.id
-                navigator.clipboard.writeText(url)
-                alert('Ссылка скопирована!')
-              }}
-              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#64748b'}}>
-              🔗 Поделиться
-            </button>
-            <button onClick={()=>{setShowEdit(!showEdit);setShowReport(false)}}
-              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#374151'}}>
-              ✏️ Редактировать
-            </button>
-            <button onClick={()=>{setShowReport(!showReport);setShowEdit(false)}}
-              style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#dc2626'}}>
-              ⚠️ Ошибка
-            </button>
+              {reviews.length>0&&(
+                <button onClick={()=>setShowReviews(!showReviews)}
+                  style={{flex:1,padding:'10px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'14px',fontWeight:600,cursor:'pointer',color:'#475569'}}>
+                  {showReviews?'Скрыть':'Отзывы ('+reviews.length+')'}
+                </button>
+              )}
+            </div>
+            <div style={{display:'flex',gap:'8px'}}>
+              <button onClick={()=>{
+                  const url = window.location.origin + window.location.pathname + '#coach-' + item.id
+                  navigator.clipboard.writeText(url)
+                  alert('Ссылка скопирована!')
+                }}
+                style={{flex:1,padding:'8px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>
+                🔗 Поделиться
+              </button>
+              <button onClick={()=>{setShowEdit(!showEdit);setShowReport(false)}}
+                style={{flex:1,padding:'8px',borderRadius:'10px',border:'1px solid #e2e8f0',background:showEdit?'#f1f5f9':'white',fontSize:'13px',cursor:'pointer',color:'#374151'}}>
+                ✏️ Редактировать
+              </button>
+              <button onClick={()=>{setShowReport(!showReport);setShowEdit(false)}}
+                style={{padding:'8px 12px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',cursor:'pointer',color:'#dc2626'}}>
+                ⚠️
+              </button>
+            </div>
           </div>
 
           {editDone&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#16a34a',marginTop:'8px'}}>✓ Спасибо! Изменения отправлены на проверку</div>}

@@ -51,11 +51,11 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section style={{background:'#0f172a',color:'white',padding:'80px 20px',textAlign:'center'}}>
+      <section style={{background:'#0f172a',color:'white',padding:'48px 20px',textAlign:'center'}}>
         <span style={{fontSize:'12px',fontWeight:600,letterSpacing:'3px',textTransform:'uppercase',color:'#60a5fa',background:'#1e3a5f',padding:'4px 16px',borderRadius:'20px',display:'inline-block',marginBottom:'24px'}}>
           Навигатор хоккейных сервисов России
         </span>
-        <h1 style={{fontSize:'72px',fontWeight:900,letterSpacing:'4px',margin:'0 0 16px'}}>
+        <h1 style={{fontSize:'clamp(40px,10vw,72px)',fontWeight:900,letterSpacing:'clamp(1px,1vw,4px)',margin:'0 0 16px'}}>
           HOCKEY<span style={{color:'#60a5fa'}}>MAP</span>
         </h1>
         <p style={{color:'#94a3b8',fontSize:'18px',marginBottom:'40px'}}>
@@ -95,7 +95,7 @@ export default async function HomePage() {
         <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
           Офлайн сервисы
         </h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'12px'}}>
           {categories?.map((cat: any) => (
             <Link key={cat.id} href={`/category/${cat.slug}`}
               style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
@@ -116,7 +116,7 @@ export default async function HomePage() {
         <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
           Онлайн сервисы
         </h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'12px'}}>
           {ONLINE_CATS.map((cat) => (
             <Link key={cat.slug} href={`/online/${cat.slug}`}
               style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block'}}>
@@ -137,7 +137,7 @@ export default async function HomePage() {
         <h2 style={{fontSize:'11px',fontWeight:600,letterSpacing:'2px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'24px'}}>
           Люди и обучение
         </h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'12px'}}>
           {PEOPLE_CATS.map((cat) => (
             <Link key={cat.slug} href={`/people/${cat.slug}`}
               style={{border:'1px solid #e2e8f0',borderRadius:'12px',padding:'20px',cursor:'pointer',textDecoration:'none',color:'inherit',display:'block',background:'#f8fafc'}}>
