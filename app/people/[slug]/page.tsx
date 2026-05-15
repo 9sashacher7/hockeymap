@@ -188,7 +188,7 @@ function ItemCard({ item, idField, cat }) {
 
   return (
     <div id={'coach-'+item.id} style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0')}}>
-      <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
+      <div style={{display:'flex',gap:'16px',alignItems:'flex-start',flexWrap:'wrap'}}>
         <Avatar name={item.name} verified={item.is_verified} />
         <div style={{flex:1}}>
           <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'6px',flexWrap:'wrap'}}>
@@ -216,34 +216,41 @@ function ItemCard({ item, idField, cat }) {
             {item.description&&<div style={{fontSize:'13px',color:'#64748b',marginTop:'4px'}}><span style={{fontWeight:700,color:'#0f172a'}}>О себе:</span> {item.description}</div>}
           </div>
 
-          <div style={{marginTop:'12px',display:'flex',flexDirection:'column',gap:'8px'}}>
+          <div style={{marginTop:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+            {(item.phone||item.telegram||item.website)&&(
+              <div style={{display:'flex',gap:'8px'}}>
+                {item.phone&&<a href={'tel:'+item.phone} style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'none',background:'#0f172a',textDecoration:'none',color:'white',fontSize:'14px',fontWeight:600,textAlign:'center'}}>📞 Позвонить</a>}
+                {item.telegram&&<a href={item.telegram.startsWith('http')?item.telegram:'https://t.me/'+item.telegram.replace('@','')} target="_blank" rel="noreferrer"
+                  style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'none',background:'#1d4ed8',textDecoration:'none',color:'white',fontSize:'14px',fontWeight:600,textAlign:'center'}}>💬 Написать</a>}
+                {item.website&&<a href={item.website} target="_blank" rel="noreferrer"
+                  style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'14px',fontWeight:600,textAlign:'center',background:'white'}}>🌐 Сайт</a>}
+              </div>
+            )}
             <div style={{display:'flex',gap:'8px'}}>
               <button onClick={()=>setShowForm(!showForm)}
-                style={{flex:1,padding:'10px',borderRadius:'10px',border:'none',background:showForm?'#1d4ed8':'#1d4ed8',color:'white',fontSize:'14px',fontWeight:600,cursor:'pointer'}}>
-                {showForm?'Отмена':'+ Оставить отзыв'}
+                style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #1d4ed8',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#1d4ed8'}}>
+                {showForm?'Отмена':'+ Отзыв'}
               </button>
               {reviews.length>0&&(
                 <button onClick={()=>setShowReviews(!showReviews)}
-                  style={{flex:1,padding:'10px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'14px',fontWeight:600,cursor:'pointer',color:'#475569'}}>
+                  style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#475569'}}>
                   {showReviews?'Скрыть':'Отзывы ('+reviews.length+')'}
                 </button>
               )}
-            </div>
-            <div style={{display:'flex',gap:'8px'}}>
               <button onClick={()=>{
                   const url = window.location.origin + window.location.pathname + '#coach-' + item.id
                   navigator.clipboard.writeText(url)
                   alert('Ссылка скопирована!')
                 }}
-                style={{flex:1,padding:'8px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>
-                🔗 Поделиться
+                style={{padding:'9px 12px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>
+                🔗
               </button>
               <button onClick={()=>{setShowEdit(!showEdit);setShowReport(false)}}
-                style={{flex:1,padding:'8px',borderRadius:'10px',border:'1px solid #e2e8f0',background:showEdit?'#f1f5f9':'white',fontSize:'13px',cursor:'pointer',color:'#374151'}}>
-                ✏️ Редактировать
+                style={{padding:'9px 12px',borderRadius:'10px',border:'1px solid #e2e8f0',background:showEdit?'#f1f5f9':'white',fontSize:'13px',cursor:'pointer',color:'#374151'}}>
+                ✏️
               </button>
               <button onClick={()=>{setShowReport(!showReport);setShowEdit(false)}}
-                style={{padding:'8px 12px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',cursor:'pointer',color:'#dc2626'}}>
+                style={{padding:'9px 12px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',fontSize:'13px',cursor:'pointer',color:'#dc2626'}}>
                 ⚠️
               </button>
             </div>
@@ -307,13 +314,7 @@ function ItemCard({ item, idField, cat }) {
           {showForm&&<ReviewForm itemId={item.id} idField={idField} onSuccess={()=>{loadReviews();setShowForm(false);setShowReviews(true)}} />}
         </div>
 
-        <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
-          {item.phone&&<a href={'tel:'+item.phone} style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>📞 Позвонить</a>}
-          {item.telegram&&<a href={item.telegram.startsWith('http')?item.telegram:'https://t.me/'+item.telegram.replace('@','')} target="_blank" rel="noreferrer"
-            style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>💬 Написать</a>}
-          {item.website&&<a href={item.website} target="_blank" rel="noreferrer"
-            style={{padding:'10px 16px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',whiteSpace:'nowrap'}}>🌐 Сайт</a>}
-        </div>
+
       </div>
     </div>
   )
