@@ -62,6 +62,25 @@ function ReviewForm({ placeId, onSubmit }: { placeId: number, onSubmit: () => vo
   )
 }
 
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const names: Record<string,string> = {
+    magaziny: 'Хоккейные магазины',
+    zatochka: 'Заточка коньков',
+    masterskie: 'Хоккейные мастерские',
+    katki: 'Катки и арены',
+  }
+  const name = names[params.slug] || 'Хоккейные сервисы'
+  return {
+    title: `${name} России — HockeyMap`,
+    description: `Найди ${name.toLowerCase()} в своём городе. Адреса, телефоны, отзывы на HockeyMap.`,
+    openGraph: {
+      title: `${name} России — HockeyMap`,
+      description: `Найди ${name.toLowerCase()} в своём городе на HockeyMap.`,
+    },
+    alternates: { canonical: `/category/${params.slug}` },
+  }
+}
+
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [places, setPlaces] = useState<any[]>([])

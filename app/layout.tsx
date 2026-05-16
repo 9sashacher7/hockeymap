@@ -15,13 +15,38 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "HockeyMap — навигатор хоккейных сервисов России",
   description: "Найди хоккейный магазин, заточку коньков, мастерскую, тренера или школу в своём городе. Все хоккейные сервисы России на одном сайте.",
-  keywords: "хоккейный магазин, заточка коньков, хоккейная мастерская, тренер по хоккею, хоккейная школа",
+  keywords: "хоккейный магазин, заточка коньков, хоккейная мастерская, тренер по хоккею, хоккейная школа, хоккей Россия",
+  metadataBase: new URL('https://hockeymap.ru'),
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   openGraph: {
     title: "HockeyMap — навигатор хоккейных сервисов России",
     description: "Магазины, заточки, мастерские, тренеры — найди нужное в своём городе",
     siteName: "HockeyMap",
     locale: "ru_RU",
     type: "website",
+    url: "https://hockeymap.ru",
+    images: [{
+      url: "/og-image.png",
+      width: 1200,
+      height: 630,
+      alt: "HockeyMap — навигатор хоккейных сервисов России",
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HockeyMap — навигатор хоккейных сервисов России",
+    description: "Магазины, заточки, мастерские, тренеры — найди нужное в своём городе",
+    images: ["/og-image.png"],
   },
 };
 
