@@ -196,6 +196,7 @@ export default function AdminPage() {
       hours: sub.hours?{info:sub.hours}:null, description: sub.description||null,
       is_online: false, is_verified: true, is_featured: false, rating_avg: 0, rating_count: 0,
       is_network: sub.is_network||false,
+      submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null,
     })
     if (ok) { await sbDelete('submissions', sub.id); setMessage('Место добавлено'); loadData() }
     else setMessage('Ошибка')
@@ -210,6 +211,7 @@ export default function AdminPage() {
       city: sub.city||null, specialization: sub.specialization||null, delivery: sub.delivery||null, payment: sub.payment||null,
       phone: sub.phone||null, social: sub.social||null,
       is_verified: false, is_featured: false, subscribers_count: null,
+      submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null,
     })
     if (ok) { await sbDelete('online_submissions', sub.id); setMessage('Сервис добавлен'); loadData() }
     else setMessage('Ошибка')
@@ -252,13 +254,13 @@ export default function AdminPage() {
     }
     const slug = slugify(sub.name) + '-' + sub.id
     let table = 'coaches'
-    let data: any = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
+    let data: any = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
     if (sub.type === 'school') {
       table = 'hockey_schools'
-      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
+      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
     } else if (sub.type === 'camp') {
       table = 'hockey_camps'
-      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, camp_type: sub.camp_type||null, dates: sub.dates||null, price: sub.price||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false }
+      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, camp_type: sub.camp_type||null, dates: sub.dates||null, price: sub.price||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
     }
     const ok = await sbPost(table, data)
     if (ok) { await sbDelete('people_submissions', sub.id); setMessage('Добавлено'); loadData() }
@@ -870,16 +872,27 @@ export default function AdminPage() {
                     </div>
                   )}
                   {expandedCard===('d'+p.id)&&(
-                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
-                      {p.address&&<div>📍 {p.address}</div>}
-                      {p.phone&&<div>📞 {p.phone}</div>}
-                      {p.website&&<div>🌐 {p.website}</div>}
-                      {p.hours&&<div>🕐 {typeof p.hours==='object'?p.hours.info:p.hours}</div>}
-                      {p.description&&<div>💬 {p.description}</div>}
-                      {p.rating_avg>0&&<div>⭐ Рейтинг: {p.rating_avg} ({p.rating_count} отз.)</div>}
-                      {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
-                      {p.is_top&&<div style={{color:'#854d0e',fontWeight:600}}>🏆 Топ магазин</div>}
-                      {p.is_network&&<div style={{color:'#16a34a',fontWeight:600}}>🏙️ Сеть магазинов</div>}
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8'}}>Публичная информация</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                        {p.address&&<div>📍 {p.address}</div>}
+                        {p.phone&&<div>📞 <a href={'tel:'+p.phone} style={{color:'#1d4ed8'}}>{p.phone}</a></div>}
+                        {p.website&&<div>🌐 <a href={p.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{p.website}</a></div>}
+                        {p.hours&&<div>🕐 {typeof p.hours==='object'?p.hours.info:p.hours}</div>}
+                        {p.description&&<div>💬 {p.description}</div>}
+                        {p.rating_avg>0&&<div>⭐ Рейтинг: {p.rating_avg} ({p.rating_count} отз.)</div>}
+                        {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
+                        {p.is_top&&<div style={{color:'#854d0e',fontWeight:600}}>🏆 Топ магазин</div>}
+                        {p.is_network&&<div style={{color:'#16a34a',fontWeight:600}}>🏙️ Сеть магазинов</div>}
+                      </div>
+                      {(p.submitter_name||p.submitter_contact)&&(
+                        <div style={{borderTop:'1px solid #e2e8f0',paddingTop:'8px'}}>
+                          <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'4px'}}>Только для админа</div>
+                          <div style={{background:'#fef9c3',borderRadius:'8px',padding:'8px 12px',color:'#854d0e',fontSize:'12px'}}>
+                            👤 Заявитель: {p.submitter_name||'—'}{p.submitter_contact?' · '+p.submitter_contact:''}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -934,8 +947,9 @@ export default function AdminPage() {
                   {expandedCard===('o'+s.id)&&(
                     <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'4px'}}>
                       {s.description&&<div>💬 {s.description}</div>}
+                      {(s.submitter_name||s.submitter_contact)&&<div style={{marginTop:'4px',paddingTop:'4px',borderTop:'1px solid #e2e8f0',color:'#94a3b8',fontSize:'12px'}}>👤 От: {s.submitter_name||'—'}{s.submitter_contact?' · '+s.submitter_contact:''}</div>}
                       {s.city&&<div>📍 {s.city}</div>}
-                      {s.phone&&<div>📞 {s.phone}</div>}
+                      {s.phone&&<div>📞 <a href={'tel:'+s.phone} style={{color:'#1d4ed8'}}>{s.phone}</a></div>}
                       {s.social&&<div>🔗 {s.social}</div>}
                       {s.delivery&&<div>🚚 Доставка: {s.delivery}</div>}
                       {s.payment&&<div>💳 Оплата: {s.payment}</div>}
@@ -1026,6 +1040,7 @@ export default function AdminPage() {
                       {p.telegram&&<div>💬 <a href={p.telegram.startsWith('http')?p.telegram:'https://t.me/'+p.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{p.telegram}</a></div>}
                       {p.website&&<div>🌐 <a href={p.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{p.website}</a></div>}
                       {p.description&&<div>📝 {p.description}</div>}
+                      {(p.submitter_name||p.submitter_contact)&&<div style={{marginTop:'4px',paddingTop:'4px',borderTop:'1px solid #e2e8f0',color:'#94a3b8',fontSize:'12px'}}>👤 От: {p.submitter_name||'—'}{p.submitter_contact?' · '+p.submitter_contact:''}</div>}
                       {p.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
                     </div>
                   )}
