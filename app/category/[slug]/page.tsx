@@ -62,25 +62,6 @@ function ReviewForm({ placeId, onSubmit }: { placeId: number, onSubmit: () => vo
   )
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const names: Record<string,string> = {
-    magaziny: 'Хоккейные магазины',
-    zatochka: 'Заточка коньков',
-    masterskie: 'Хоккейные мастерские',
-    katki: 'Катки и арены',
-  }
-  const name = names[params.slug] || 'Хоккейные сервисы'
-  return {
-    title: `${name} России — HockeyMap`,
-    description: `Найди ${name.toLowerCase()} в своём городе. Адреса, телефоны, отзывы на HockeyMap.`,
-    openGraph: {
-      title: `${name} России — HockeyMap`,
-      description: `Найди ${name.toLowerCase()} в своём городе на HockeyMap.`,
-    },
-    alternates: { canonical: `/category/${params.slug}` },
-  }
-}
-
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [places, setPlaces] = useState<any[]>([])
@@ -244,7 +225,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 <div style={{ borderTop: '1px solid #f1f5f9', background: '#f8fafc' }}>
                   <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {place.address && <div style={{ display: 'flex', gap: '10px' }}><span>📍</span><span style={{ fontSize: '14px' }}>{place.address}</span></div>}
-                    {place.hours && <div style={{ display: 'flex', gap: '10px' }}><span>🕐</span><span style={{ fontSize: '14px', color: '#374151' }}>{place.hours}</span></div>}
+                    {place.hours && <div style={{ display: 'flex', gap: '10px' }}><span>🕐</span><span style={{ fontSize: '14px', color: '#374151' }}>{typeof place.hours === 'object' ? place.hours?.info : (typeof place.hours === 'string' && place.hours.startsWith('{') ? JSON.parse(place.hours)?.info : place.hours)}</span></div>}
                     {place.phone && <div style={{ display: 'flex', gap: '10px' }}><span>📞</span><a href={`tel:${place.phone}`} style={{ fontSize: '14px', color: '#1d4ed8', textDecoration: 'none' }}>{place.phone}</a></div>}
                     {place.website && <div style={{ display: 'flex', gap: '10px' }}><span>🌐</span><a href={place.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#1d4ed8', textDecoration: 'none' }}>{place.website}</a></div>}
                     {place.description && <div style={{ fontSize: '14px', color: '#374151' }}>{place.description}</div>}
