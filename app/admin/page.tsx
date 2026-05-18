@@ -73,6 +73,7 @@ export default function AdminPage() {
   const [reviewsTab, setReviewsTab] = useState('coaches')
   const [loading, setLoading] = useState(false)
   const [allCardsTab, setAllCardsTab] = useState('offline')
+  const [allCardsCat, setAllCardsCat] = useState('')
   const [allCardsSearch, setAllCardsSearch] = useState('')
   const [expandedCard, setExpandedCard] = useState<string|null>(null)
   const [editingCard, setEditingCard] = useState<string|null>(null)
@@ -160,7 +161,7 @@ export default function AdminPage() {
         address: sub.address||null,
         phone: sub.phone||null,
         website: sub.website||null,
-        hours: sub.hours?{info:sub.hours}:null,
+        hours: sub.hours?(typeof sub.hours==='object'?sub.hours:{info:sub.hours}):null,
         description: sub.description||null,
         is_network: sub.is_network||false,
       })
@@ -257,7 +258,7 @@ export default function AdminPage() {
     let data: any = { name: sub.name, slug, city_id: cityId, specialization: sub.specialization||null, experience: sub.experience||null, price_per_hour: sub.price_per_hour||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
     if (sub.type === 'school') {
       table = 'hockey_schools'
-      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
+      data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, price: sub.price||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
     } else if (sub.type === 'camp') {
       table = 'hockey_camps'
       data = { name: sub.name, slug, city_id: cityId, age_from: sub.age_from||null, age_to: sub.age_to||null, camp_type: sub.camp_type||null, dates: sub.dates||null, price: sub.price||null, phone: sub.phone||null, telegram: sub.telegram||null, website: sub.website||null, address: sub.address||null, description: sub.description||null, is_verified: true, is_featured: false, submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null }
@@ -819,18 +820,51 @@ export default function AdminPage() {
         <div>
           <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
             {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение']].map(([t,l])=>(
-              <button key={t} onClick={()=>setAllCardsTab(t)} style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:allCardsTab===t?'#475569':'#f1f5f9',color:allCardsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>{l}</button>
+              <button key={t} onClick={()=>{setAllCardsTab(t);setAllCardsCat('')}} style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:allCardsTab===t?'#475569':'#f1f5f9',color:allCardsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>{l}</button>
             ))}
           </div>
 
           <input placeholder="Поиск по названию, городу, телефону..." value={allCardsSearch} onChange={e=>setAllCardsSearch(e.target.value)}
-            style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none',boxSizing:'border-box',marginBottom:'16px'}} />
+            style={{width:'100%',padding:'12px 16px',borderRadius:'12px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none',boxSizing:'border-box',marginBottom:'8px'}} />
+
+          {allCardsTab==='offline'&&(
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+              {[['','Все'],['1','Магазины'],['2','Заточка коньков'],['3','Мастерские'],['4','Катки и арены']].map(([v,l])=>(
+                <button key={v} onClick={()=>setAllCardsCat(v)}
+                  style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+          {allCardsTab==='online'&&(
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+              {[['','Все'],['baraholki','Барахолки'],['internet-magaziny','Интернет-магазины'],['statistika','Статистика'],['avito','Авито'],['poleznoe','Ещё полезное']].map(([v,l])=>(
+                <button key={v} onClick={()=>setAllCardsCat(v)}
+                  style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+          {allCardsTab==='people'&&(
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+              {[['','Все'],['coach','Тренеры'],['school','Школы'],['camp','Лагеря']].map(([v,l])=>(
+                <button key={v} onClick={()=>setAllCardsCat(v)}
+                  style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
 
           {allCardsTab==='offline'&&(
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               {allPlaces.filter(p=>{
                 const q = allCardsSearch.toLowerCase()
-                return !q || p.name?.toLowerCase().includes(q) || p.address?.toLowerCase().includes(q) || p.phone?.includes(q)
+                const matchSearch = !q || p.name?.toLowerCase().includes(q) || p.address?.toLowerCase().includes(q) || p.phone?.includes(q)
+                const matchCat = !allCardsCat || String(p.category_id)===allCardsCat
+                return matchSearch && matchCat
               }).map(p=>(
                 <div key={p.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
@@ -904,7 +938,9 @@ export default function AdminPage() {
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               {allServices.filter(s=>{
                 const q = allCardsSearch.toLowerCase()
-                return !q || s.name?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.phone?.includes(q)
+                const matchSearch = !q || s.name?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.phone?.includes(q)
+                const matchCat = !allCardsCat || s.category_slug===allCardsCat
+                return matchSearch && matchCat
               }).map(s=>(
                 <div key={s.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
@@ -976,7 +1012,9 @@ export default function AdminPage() {
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               {[...allCoaches.map(c=>({...c,_type:'coach'})),...allSchools.map(s=>({...s,_type:'school'})),...allCamps.map(c=>({...c,_type:'camp'}))].filter(p=>{
                 const q = allCardsSearch.toLowerCase()
-                return !q || p.name?.toLowerCase().includes(q) || p.city?.name?.toLowerCase().includes(q) || p.phone?.includes(q)
+                const matchSearch = !q || p.name?.toLowerCase().includes(q) || p.city?.name?.toLowerCase().includes(q) || p.phone?.includes(q)
+                const matchCat = !allCardsCat || p._type===allCardsCat
+                return matchSearch && matchCat
               }).map(p=>(
                 <div key={p._type+p.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>

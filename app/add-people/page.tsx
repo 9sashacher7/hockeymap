@@ -51,6 +51,7 @@ export default function AddPeoplePage() {
     price_per_hour: '',
     address: '',
     description: '',
+    price_custom: '',
     submitter_name: '',
     submitter_contact: '',
   })
@@ -66,7 +67,8 @@ export default function AddPeoplePage() {
   async function handleSubmit() {
     if (!form.type || !form.name) return
     setLoading(true)
-    const ok = await post('people_submissions', {
+    const finalPrice = form.price==='custom' ? form.price_custom : form.price
+    const ok = await post('people_submissions', {...form, price: finalPrice,
       ...form,
       city_id: form.city_id && form.city_id !== 'other' ? parseInt(form.city_id) : null,
       custom_city: form.custom_city || null,
@@ -158,8 +160,23 @@ export default function AddPeoplePage() {
 
           {inp('address', 'Адрес')}
           <div style={{position:'relative'}}>
-            {inp('price', 'Стоимость')}
-            <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>Стоимость указывайте за полный период. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
+            {form.type==='school'?(
+              <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                <select value={form.price} onChange={e=>set('price',e.target.value)}
+                  style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+                  <option value="">Стоимость</option>
+                  <option value="Бесплатно">Бесплатно</option>
+                  <option value="custom">Указать сумму</option>
+                </select>
+                {form.price==='custom'&&inp('price_custom','Введите стоимость')}
+                <div style={{fontSize:'11px',color:'#94a3b8'}}>Стоимость указывайте за месяц. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
+              </div>
+            ):(
+              <div>
+                {inp('price', 'Стоимость')}
+                <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>Стоимость указывайте за полный период. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
+              </div>
+            )}
           </div>
           {inp('phone', 'Телефон')}
           {inp('telegram', 'Ссылка для связи — Telegram, WhatsApp, VK и др. (для кнопки Написать)')}

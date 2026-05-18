@@ -115,7 +115,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
         address: editForm.address ?? place.address,
         phone: editForm.phone ?? place.phone,
         website: editForm.website ?? place.website,
-        hours: editForm.hours ?? place.hours,
+        hours: editForm.hours ?? (typeof place.hours === 'object' ? place.hours?.info : place.hours),
         description: editForm.description ?? place.description,
         category_id: place.category_id,
         city_id: place.city?.id || null,
@@ -263,7 +263,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       <div style={{background:'#f8fafc',borderRadius:'10px',padding:'14px',border:'1px solid #e2e8f0',display:'flex',flexDirection:'column',gap:'8px'}}>
                         <div style={{fontSize:'12px',fontWeight:600,color:'#374151',marginBottom:'4px'}}>Редактировать данные</div>
                         {[['name','Название'],['address','Адрес'],['phone','Телефон'],['website','Сайт'],['hours','Часы работы'],['description','Описание']].map(([f,pl])=>(
-                          <input key={f} placeholder={pl} defaultValue={place[f]||''}
+                          <input key={f} placeholder={pl} defaultValue={f==='hours'?(typeof place[f]==='object'?place[f]?.info:place[f])||'':place[f]||''}
                             onChange={e=>setEditForm((prev:any)=>({...prev,[f]:e.target.value}))}
                             style={{padding:'8px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',fontSize:'13px',outline:'none'}} />
                         ))}

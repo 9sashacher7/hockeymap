@@ -121,7 +121,7 @@ function ItemCard({ item, idField, cat }) {
   async function submitEdit() {
     setEditLoading(true)
     // Отправляем только изменённые поля
-    const fields = ['name','phone','website','address','description','specialization','experience','price_per_hour','age_from','age_to','dates']
+    const fields = ['name','phone','website','address','description','specialization','experience','price_per_hour','age_from','age_to','dates','price']
     const changed: any = {}
     fields.forEach(f => {
       if (editForm[f] !== undefined && editForm[f] !== '' && editForm[f] !== String(item[f]||'')) {
@@ -187,8 +187,8 @@ function ItemCard({ item, idField, cat }) {
   const avgRating = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
 
   return (
-    <div id={'coach-'+item.id} style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0')}}>
-      <div style={{display:'flex',gap:'16px',alignItems:'flex-start',flexWrap:'wrap'}}>
+    <div id={'coach-'+item.id} style={{border:'1px solid '+(item.is_featured?'#fde68a':item.is_verified?'#bbf7d0':'#e2e8f0'),borderRadius:'14px',padding:'20px',background:'white',borderLeft:'4px solid '+(item.is_featured?'#f59e0b':item.is_verified?'#16a34a':'#e2e8f0'),minHeight:'160px',width:'100%',boxSizing:'border-box'}}>
+      <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
         <Avatar name={item.name} verified={item.is_verified} />
         <div style={{flex:1}}>
           <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'6px',flexWrap:'wrap'}}>
@@ -218,15 +218,15 @@ function ItemCard({ item, idField, cat }) {
 
           <div style={{marginTop:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
             {(item.phone||item.telegram||item.website)&&(
-              <div style={{display:'flex',gap:'8px'}}>
-                {item.phone&&<a href={'tel:'+item.phone} style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'none',background:'#0f172a',textDecoration:'none',color:'white',fontSize:'14px',fontWeight:600,textAlign:'center'}}>📞 Позвонить</a>}
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                {item.phone&&<a href={'tel:'+item.phone} style={{padding:'10px 24px',borderRadius:'10px',border:'none',background:'#0f172a',textDecoration:'none',color:'white',fontSize:'13px',fontWeight:600,textAlign:'center'}}>📞 Позвонить</a>}
                 {item.telegram&&<a href={item.telegram.startsWith('http')?item.telegram:'https://t.me/'+item.telegram.replace('@','')} target="_blank" rel="noreferrer"
-                  style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'none',background:'#1d4ed8',textDecoration:'none',color:'white',fontSize:'14px',fontWeight:600,textAlign:'center'}}>💬 Написать</a>}
+                  style={{padding:'10px 24px',borderRadius:'10px',border:'none',background:'#1d4ed8',textDecoration:'none',color:'white',fontSize:'13px',fontWeight:600,textAlign:'center'}}>💬 Написать</a>}
                 {item.website&&<a href={item.website} target="_blank" rel="noreferrer"
-                  style={{flex:1,padding:'11px 8px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'14px',fontWeight:600,textAlign:'center',background:'white'}}>🌐 Сайт</a>}
+                  style={{padding:'10px 24px',borderRadius:'10px',border:'1px solid #e2e8f0',textDecoration:'none',color:'#0f172a',fontSize:'13px',fontWeight:600,textAlign:'center',background:'white'}}>🌐 Сайт</a>}
               </div>
             )}
-            <div style={{display:'flex',gap:'8px'}}>
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
               <button onClick={()=>setShowForm(!showForm)}
                 style={{flex:1,padding:'9px',borderRadius:'10px',border:'1px solid #1d4ed8',background:'white',fontSize:'13px',fontWeight:600,cursor:'pointer',color:'#1d4ed8'}}>
                 {showForm?'Отмена':'+ Отзыв'}
@@ -271,6 +271,7 @@ function ItemCard({ item, idField, cat }) {
                 ...(idField==='coach_id'?[['specialization','Специализация'],['experience','Опыт'],['price_per_hour','Цена за час (руб)']]: []),
                 ...(idField==='school_id'||idField==='camp_id'?[['age_from','Возраст от'],['age_to','Возраст до']]: []),
                 ...(idField==='camp_id'?[['dates','Даты проведения']]: []),
+                ...(idField==='school_id'||idField==='camp_id'?[]: []),
                 ['description','Описание'],
               ].map(([f,pl])=>(
                 <input key={f} placeholder={pl} defaultValue={item[f]||''}
@@ -439,7 +440,7 @@ export default function PeopleCategoryPage() {
           <a href="/add-people" style={{padding:'12px 24px',background:'#1d4ed8',color:'white',borderRadius:'12px',textDecoration:'none',fontWeight:600}}>+ Добавить</a>
         </div>
       ) : (
-        <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+        <div style={{display:'flex',flexDirection:'column',gap:'12px',alignItems:'stretch'}}>
           {filtered.map(item=>(
             <ItemCard key={item.id} item={item} idField={cat.idField} cat={cat} />
           ))}
