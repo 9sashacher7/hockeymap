@@ -174,6 +174,7 @@ export default function OnlineCategoryPage() {
                 {s.description&&<div style={{fontSize:'13px',color:'#64748b',marginBottom:'12px',lineHeight:'1.6',flex:1}}><span style={{fontWeight:700,color:'#0f172a'}}>Описание:</span> {s.description}</div>}
                 <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'12px'}}>
                   {s.city&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Город:</span> {s.city}</div>}
+                  {s.members_count&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Участников:</span> {s.members_count}</div>}
                   {s.specialization&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Специализация:</span> {s.specialization}</div>}
                   {s.delivery&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Доставка:</span> {s.delivery}</div>}
                   {s.payment&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Оплата:</span> {s.payment}</div>}
@@ -201,6 +202,10 @@ export default function OnlineCategoryPage() {
                     ? <span style={{fontSize:'12px',color:'#94a3b8'}}>👥 {s.subscribers_count.toLocaleString('ru-RU')}</span>
                     : <span/>
                   }
+
+                  <div style={{display:'flex',flexDirection:'column',gap:'4px',width:'100%'}}>
+                    {s.url&&slug==='statistika'&&<div style={{fontSize:'13px',color:'#64748b'}}><span style={{fontWeight:700,color:'#0f172a'}}>Сайт:</span> <a href={s.url} target="_blank" rel="noopener noreferrer" style={{color:'#1d4ed8',textDecoration:'none'}}>{s.url}</a></div>}
+                  </div>
                   {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{fontSize:'13px',color:'#1d4ed8',fontWeight:600,textDecoration:'none'}}>Перейти →</a>}
                 </div>
 

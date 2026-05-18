@@ -99,6 +99,9 @@ export default function AddPage() {
     <main style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
       <Link href="/" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none' }}>← Главная</Link>
       <h1 style={{ fontSize: '32px', fontWeight: 900, margin: '16px 0 8px' }}>Добавить место</h1>
+      <div style={{background:'#fef9c3',border:'1px solid #fde68a',borderRadius:'12px',padding:'14px 16px',marginBottom:'8px',fontSize:'14px',color:'#854d0e',lineHeight:1.6}}>
+        💡 Перед добавлением — найдите своё место через <a href="/" style={{color:'#854d0e',fontWeight:700}}>поиск</a>. Если оно уже есть, вы можете отредактировать данные или сообщить об ошибке прямо в карточке. Хотите удалить — <a href="/contact" style={{color:'#854d0e',fontWeight:700}}>напишите нам</a>.
+      </div>
       <p style={{ color: '#64748b', marginBottom: '32px', fontSize: '14px' }}>
         Знаешь хороший хоккейный магазин, заточку или мастерскую? Добавь — поможешь всему сообществу.
       </p>

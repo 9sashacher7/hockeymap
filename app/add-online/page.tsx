@@ -79,6 +79,9 @@ export default function AddOnlinePage() {
     <main style={{maxWidth:'600px',margin:'0 auto',padding:'40px 20px'}}>
       <Link href="/" style={{fontSize:'13px',color:'#64748b',textDecoration:'none'}}>← Главная</Link>
       <h1 style={{fontSize:'32px',fontWeight:900,margin:'16px 0 8px'}}>Добавить сервис</h1>
+      <div style={{background:'#fef9c3',border:'1px solid #fde68a',borderRadius:'12px',padding:'14px 16px',marginBottom:'8px',fontSize:'14px',color:'#854d0e',lineHeight:1.6}}>
+        💡 Перед добавлением — найдите свой сервис через <a href="/" style={{color:'#854d0e',fontWeight:700}}>поиск</a>. Если он уже есть, вы можете отредактировать данные или сообщить об ошибке прямо в карточке. Хотите удалить — <a href="/contact" style={{color:'#854d0e',fontWeight:700}}>напишите нам</a>.
+      </div>
       <p style={{color:'#64748b',marginBottom:'32px',fontSize:'14px'}}>
         Знаешь полезный онлайн-ресурс для хоккеистов? Добавь — поможешь всему сообществу.
       </p>
@@ -96,7 +99,12 @@ export default function AddOnlinePage() {
           {CATS.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
         </select>
 
-        {input('url', 'Ссылка на сайт', true)}
+        {form.category_slug === 'baraholki' ? input('url', 'Вставьте ссылку на ресурс', true) : input('url', 'Ссылка на сайт', true)}
+        {form.category_slug === 'baraholki' && (
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            {input('members_count', 'Количество участников')}
+          </div>
+        )}
         {form.category_slug === 'internet-magaziny' && <>
           {input('city', 'Город')}
           {input('phone', 'Телефон')}
@@ -131,6 +139,47 @@ export default function AddOnlinePage() {
           </select>
         </>}
 
+        {form.category_slug === 'statistika' && (
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            <div style={{fontSize:'12px',color:'#64748b',fontWeight:600}}>Социальные сети</div>
+            {socials.map((s, i) => (
+              <div key={i} style={{display:'flex',gap:'8px'}}>
+                <input
+                  placeholder='Название (VK, TG...)'
+                  value={s.name}
+                  onChange={e => {
+                    const next = [...socials]
+                    next[i] = {...next[i], name: e.target.value}
+                    setSocials(next)
+                  }}
+                  style={{width:'130px',padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',boxSizing:'border-box',outline:'none',flexShrink:0}}
+                />
+                <input
+                  placeholder='Ссылка'
+                  value={s.url}
+                  onChange={e => {
+                    const next = [...socials]
+                    next[i] = {...next[i], url: e.target.value}
+                    setSocials(next)
+                  }}
+                  style={{flex:1,padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',boxSizing:'border-box',outline:'none'}}
+                />
+                {socials.length > 1 && (
+                  <button onClick={() => setSocials(socials.filter((_, j) => j !== i))} type='button'
+                    style={{padding:'8px 12px',borderRadius:'10px',border:'1px solid #fca5a5',background:'white',color:'#dc2626',cursor:'pointer',fontSize:'14px'}}>
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {socials.length < 5 && (
+              <button onClick={() => setSocials([...socials, {name:'',url:''}])} type='button'
+                style={{padding:'8px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',background:'white',color:'#1d4ed8',fontWeight:600,fontSize:'13px',cursor:'pointer',alignSelf:'flex-start'}}>
+                + Добавить соцсеть
+              </button>
+            )}
+          </div>
+        )}
         {form.category_slug === 'poleznoe' && (
           <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
             <div style={{fontSize:'12px',color:'#64748b',fontWeight:600}}>Социальные сети</div>

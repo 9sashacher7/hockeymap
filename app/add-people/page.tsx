@@ -25,6 +25,7 @@ const TYPES = [
   { value: 'coach', label: '👤 Тренер' },
   { value: 'school', label: '🎓 Хоккейная школа или секция' },
   { value: 'camp', label: '📋 Хоккейный сбор или лагерь' },
+  { value: 'tournament', label: '🏆 Турнир или соревнование' },
 ]
 
 export default function AddPeoplePage() {
@@ -45,6 +46,10 @@ export default function AddPeoplePage() {
     age_to: '',
     camp_type: '',
     dates: '',
+    date_from: '',
+    date_to: '',
+    format: '',
+    teams_count: '',
     phone: '',
     telegram: '',
     website: '',
@@ -68,7 +73,8 @@ export default function AddPeoplePage() {
     if (!form.type || !form.name) return
     setLoading(true)
     const finalPrice = form.price==='custom' ? form.price_custom : form.price
-    const ok = await post('people_submissions', {...form, price: finalPrice,
+    const table = form.type === 'tournament' ? 'tournament_submissions' : 'people_submissions'
+    const ok = await post(table, {...form, price: finalPrice,
       ...form,
       city_id: form.city_id && form.city_id !== 'other' ? parseInt(form.city_id) : null,
       custom_city: form.custom_city || null,
@@ -136,7 +142,7 @@ export default function AddPeoplePage() {
           {inp('price_per_hour', 'Цена за час (руб)', true)}
           </>}
 
-          {(form.type==='school'||form.type==='camp') && (
+          {(form.type==='school'||form.type==='camp'||form.type==='tournament') && (
             <div style={{display:'flex',gap:'12px'}}>
               <input placeholder="Возраст от" value={form.age_from} onChange={e=>set('age_from',e.target.value)} type="number"
                 style={{flex:1,padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}} />
@@ -145,6 +151,36 @@ export default function AddPeoplePage() {
             </div>
           )}
 
+          {form.type==='tournament' && <>
+            <div style={{display:'flex',gap:'12px'}}>
+              <input placeholder="Дата начала" value={form.date_from} onChange={e=>set('date_from',e.target.value)}
+                style={{flex:1,padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}} />
+              <input placeholder="Дата окончания" value={form.date_to} onChange={e=>set('date_to',e.target.value)}
+                style={{flex:1,padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}} />
+            </div>
+            <select value={form.format} onChange={e=>set('format',e.target.value)}
+              style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+              <option value="">Формат турнира</option>
+              <option value="3x3">3 на 3</option>
+              <option value="4x4">4 на 4</option>
+              <option value="5x5">5 на 5</option>
+              <option value="6x6">6 на 6</option>
+            </select>
+            {inp('teams_count', 'Количество команд')}
+            <div>
+              <select value={form.price} onChange={e=>set('price',e.target.value)}
+                style={{width:'100%',padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
+                <option value="">Стоимость участия</option>
+                <option value="Бесплатно">Бесплатно</option>
+                <option value="custom">Указать сумму</option>
+              </select>
+              {form.price==='custom'&&(
+                <input placeholder="Введите стоимость" value={form.price_custom||''} onChange={e=>set('price_custom',e.target.value)}
+                  style={{width:'100%',padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none',marginTop:'6px',boxSizing:'border-box'}} />
+              )}
+              <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>Указывайте какой взнос с команды за турнир. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
+            </div>
+          </>}
           {form.type==='camp' && <>
             <select value={form.camp_type} onChange={e=>set('camp_type',e.target.value)}
               style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>

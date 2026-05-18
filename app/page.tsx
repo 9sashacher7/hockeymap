@@ -24,6 +24,7 @@ const PEOPLE_CATS = [
   { slug: 'trenery', name: 'Тренеры', icon: '👤' },
   { slug: 'shkoly', name: 'Хоккейные школы и секции', icon: '🎓' },
   { slug: 'sbory', name: 'Сборы и лагеря', icon: '📋' },
+  { slug: 'turniry', name: 'Турниры', icon: '🏆' },
 ]
 
 const FEATURED_CITIES = [

@@ -66,6 +66,8 @@ export default function AdminPage() {
   const [allCoaches, setAllCoaches] = useState([])
   const [allSchools, setAllSchools] = useState([])
   const [allCamps, setAllCamps] = useState([])
+  const [allTournaments, setAllTournaments] = useState([])
+  const [tournamentSubmissions, setTournamentSubmissions] = useState([])
   const [history, setHistory] = useState([])
   const [reviews, setReviews] = useState([])
   const [cities, setCities] = useState([])
@@ -102,7 +104,7 @@ export default function AdminPage() {
   const [peopleNotes, setPeopleNotes] = useState('')
 
   async function loadData() {
-    const [subs, onlineSubs, peopleSubs, cityList, catList, places, services, coaches, schools, camps, hist, revs] = await Promise.all([
+    const [subs, onlineSubs, peopleSubs, cityList, catList, places, services, coaches, schools, camps, tournaments, tournSubs, hist, revs] = await Promise.all([
       sq('submissions', 'order=created_at.desc'),
       sq('online_submissions', 'order=created_at.desc'),
       sq('people_submissions', 'order=created_at.desc'),
@@ -113,6 +115,8 @@ export default function AdminPage() {
       sq('coaches', 'select=*,city:cities(name)&order=name'),
       sq('hockey_schools', 'select=*,city:cities(name)&order=name'),
       sq('hockey_camps', 'select=*,city:cities(name)&order=name'),
+      sq('tournaments', 'select=*,city:cities(name)&order=name'),
+      sq('tournament_submissions', 'order=created_at.desc'),
       sq('featured_history', 'order=created_at.desc&limit=50'),
       sq('reviews', 'select=id,author_name,rating,text,created_at,is_approved,place_id,coach_id,school_id,camp_id,place:places(name),coach:coaches(name)&order=created_at.desc'),
     ])
@@ -126,6 +130,8 @@ export default function AdminPage() {
     setAllCoaches(Array.isArray(coaches) ? coaches : [])
     setAllSchools(Array.isArray(schools) ? schools : [])
     setAllCamps(Array.isArray(camps) ? camps : [])
+    setAllTournaments(Array.isArray(tournaments) ? tournaments : [])
+    setTournamentSubmissions(Array.isArray(tournSubs) ? tournSubs : [])
     setHistory(Array.isArray(hist) ? hist : [])
     setReviews(Array.isArray(revs) ? revs : [])
   }
@@ -211,6 +217,7 @@ export default function AdminPage() {
       description: sub.description||null, category_slug: sub.category_slug||null,
       city: sub.city||null, specialization: sub.specialization||null, delivery: sub.delivery||null, payment: sub.payment||null,
       phone: sub.phone||null, social: sub.social||null,
+      members_count: sub.members_count||null,
       is_verified: false, is_featured: false, subscribers_count: null,
       submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null,
     })
@@ -819,7 +826,7 @@ export default function AdminPage() {
       {tab==='all_cards'&&(
         <div>
           <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
-            {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение']].map(([t,l])=>(
+            {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение'],['tournaments','Турниры']].map(([t,l])=>(
               <button key={t} onClick={()=>{setAllCardsTab(t);setAllCardsCat('')}} style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:allCardsTab===t?'#475569':'#f1f5f9',color:allCardsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>{l}</button>
             ))}
           </div>
@@ -840,6 +847,16 @@ export default function AdminPage() {
           {allCardsTab==='online'&&(
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
               {[['','Все'],['baraholki','Барахолки'],['internet-magaziny','Интернет-магазины'],['statistika','Статистика'],['avito','Авито'],['poleznoe','Ещё полезное']].map(([v,l])=>(
+                <button key={v} onClick={()=>setAllCardsCat(v)}
+                  style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+          {allCardsTab==='tournaments'&&(
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+              {[['','Все']].map(([v,l])=>(
                 <button key={v} onClick={()=>setAllCardsCat(v)}
                   style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
                   {l}
@@ -984,6 +1001,7 @@ export default function AdminPage() {
                     <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'8px'}}>
                       <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8'}}>Публичная информация</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                        {s.members_count&&<div>👥 Участников: {s.members_count}</div>}
                         {s.city&&<div>📍 {s.city}</div>}
                         {s.phone&&<div>📞 <a href={'tel:'+s.phone} style={{color:'#1d4ed8'}}>{s.phone}</a></div>}
                         {s.social&&<div>🔗 {s.social}</div>}
@@ -1008,6 +1026,61 @@ export default function AdminPage() {
             </div>
           )}
 
+          {allCardsTab==='tournaments'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {allTournaments.filter(t=>{
+                const q = allCardsSearch.toLowerCase()
+                return !q || t.name?.toLowerCase().includes(q) || t.city?.name?.toLowerCase().includes(q)
+              }).map(t=>(
+                <div key={t.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:'15px'}}>{t.name}</div>
+                      <div style={{fontSize:'12px',color:'#94a3b8'}}>Турнир{t.city?' · '+t.city.name:''}</div>
+                      {t.phone&&<div style={{fontSize:'12px',color:'#64748b',marginTop:'2px'}}>📞 {t.phone}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:'6px'}}>
+                      <button onClick={()=>setExpandedCard(expandedCard===('t'+t.id)?null:('t'+t.id))}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
+                        {expandedCard===('t'+t.id)?'Скрыть':'Подробнее'}
+                      </button>
+                      <button onClick={async()=>{if(confirm('Удалить '+t.name+'?')){await sbDelete('tournaments',t.id);loadData()}}}
+                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'12px',cursor:'pointer',color:'#dc2626'}}>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                  {expandedCard===('t'+t.id)&&(
+                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8'}}>Публичная информация</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                        {t.city&&<div>📍 {t.city.name}</div>}
+                        {(t.date_from||t.date_to)&&<div>📅 Даты: {t.date_from}{t.date_to?' — '+t.date_to:''}</div>}
+                        {t.format&&<div>🏒 Формат: {t.format}</div>}
+                        {t.age_from&&t.age_to&&<div>👶 Возраст: {t.age_from}–{t.age_to} лет</div>}
+                        {t.teams_count&&<div>👥 Команд: {t.teams_count}</div>}
+                        {t.price&&<div>💵 Стоимость: {t.price}</div>}
+                        {t.address&&<div>📍 Адрес: {t.address}</div>}
+                        {t.phone&&<div>📞 <a href={'tel:'+t.phone} style={{color:'#1d4ed8'}}>{t.phone}</a></div>}
+                        {t.telegram&&<div>💬 <a href={t.telegram.startsWith('http')?t.telegram:'https://t.me/'+t.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{t.telegram}</a></div>}
+                        {t.website&&<div>🌐 <a href={t.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{t.website}</a></div>}
+                        {t.description&&<div>📝 {t.description}</div>}
+                        {t.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
+                      </div>
+                      {(t.submitter_name||t.submitter_contact)&&(
+                        <div style={{borderTop:'1px solid #e2e8f0',paddingTop:'8px'}}>
+                          <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'4px'}}>Только для админа</div>
+                          <div style={{background:'#fef9c3',borderRadius:'8px',padding:'8px 12px',color:'#854d0e',fontSize:'12px'}}>
+                            👤 Заявитель: {t.submitter_name||'—'}{t.submitter_contact?' · '+t.submitter_contact:''}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           {allCardsTab==='people'&&(
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               {[...allCoaches.map(c=>({...c,_type:'coach'})),...allSchools.map(s=>({...s,_type:'school'})),...allCamps.map(c=>({...c,_type:'camp'}))].filter(p=>{
