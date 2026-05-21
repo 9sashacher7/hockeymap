@@ -162,9 +162,7 @@ export default function AddPeoplePage() {
               style={{padding:'10px 14px',borderRadius:'10px',border:'1px solid #e2e8f0',fontSize:'14px',outline:'none'}}>
               <option value="">Формат турнира</option>
               <option value="3x3">3 на 3</option>
-              <option value="4x4">4 на 4</option>
               <option value="5x5">5 на 5</option>
-              <option value="6x6">6 на 6</option>
             </select>
             {inp('teams_count', 'Количество команд')}
             <div>
@@ -195,7 +193,7 @@ export default function AddPeoplePage() {
           </>}
 
           {inp('address', 'Адрес')}
-          <div style={{position:'relative'}}>
+          {form.type!=='tournament'&&<div style={{position:'relative'}}>
             {form.type==='school'?(
               <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
                 <select value={form.price} onChange={e=>set('price',e.target.value)}
@@ -213,7 +211,7 @@ export default function AddPeoplePage() {
                 <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>Стоимость указывайте за полный период. Если есть детали и нюансы — сообщите о них в графе Описание.</div>
               </div>
             )}
-          </div>
+          </div>}
           {inp('phone', 'Телефон')}
           {inp('telegram', 'Ссылка для связи — Telegram, WhatsApp, VK и др. (для кнопки Написать)')}
           {inp('website', 'Сайт')}

@@ -283,6 +283,35 @@ export default function AdminPage() {
     setMessage('Удалено'); loadData(); setLoading(false)
   }
 
+  async function approveTournament(sub) {
+    setLoading(true)
+    const slug = slugify(sub.name) + '-' + sub.id
+    let cityId = sub.city_id
+    if (!cityId && sub.custom_city) {
+      const cityRes = await fetch(`${SURL}/rest/v1/cities`, {
+        method: 'POST',
+        headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ name: sub.custom_city, slug: slugify(sub.custom_city) })
+      })
+      const cityData = await cityRes.json()
+      cityId = Array.isArray(cityData) ? cityData[0]?.id : cityData?.id
+    }
+    const ok = await sbPost('tournaments', {
+      name: sub.name, slug, city_id: cityId||null,
+      date_from: sub.date_from||null, date_to: sub.date_to||null,
+      format: sub.format||null, age_from: sub.age_from||null, age_to: sub.age_to||null,
+      teams_count: sub.teams_count||null, price: sub.price||null,
+      address: sub.address||null, phone: sub.phone||null,
+      telegram: sub.telegram||null, website: sub.website||null,
+      description: sub.description||null,
+      is_verified: true, is_featured: false,
+      submitter_name: sub.submitter_name||null, submitter_contact: sub.submitter_contact||null,
+    })
+    if (ok) { await sbDelete('tournament_submissions', sub.id); setMessage('Турнир добавлен'); loadData() }
+    else setMessage('Ошибка')
+    setLoading(false)
+  }
+
   async function approveReview(r) {
     setLoading(true)
     await sbPatch('reviews', r.id, { is_approved: true })
@@ -444,7 +473,7 @@ export default function AdminPage() {
   const tabs = [
     {key:'offline',label:'Офлайн места ('+submissions.length+')',color:'#1d4ed8'},
     {key:'online',label:'Онлайн сервисы ('+onlineSubmissions.length+')',color:'#1d4ed8'},
-    {key:'people',label:'Люди и обучение ('+peopleSubmissions.length+')',color:'#0891b2'},
+    {key:'people',label:'Люди и обучение ('+(peopleSubmissions.length+tournamentSubmissions.length)+')',color:'#0891b2'},
     {key:'top',label:'Топ',color:'#f59e0b'},
     {key:'verified',label:'Проверено',color:'#16a34a'},
     {key:'reviews',label:'Отзывы ('+reviews.filter(r=>!r.is_approved).length+')',color:'#7c3aed'},
@@ -562,8 +591,8 @@ export default function AdminPage() {
 
       {tab==='people'&&(peopleSubmissions.length===0
         ? <div style={{textAlign:'center',color:'#94a3b8',padding:'80px 0'}}>Новых заявок нет</div>
-        : peopleSubmissions.map(sub=>(
-          <SubCard key={sub.id} sub={sub} onApprove={()=>approvePeople(sub)} onReject={()=>reject(sub,'people_submissions')}>
+        : [...peopleSubmissions, ...tournamentSubmissions.map(s=>({...s,_isTournament:true}))].map(sub=>(
+          <SubCard key={sub.id+'_'+sub._isTournament} sub={sub} onApprove={()=>sub._isTournament?approveTournament(sub):approvePeople(sub)} onReject={()=>reject(sub,sub._isTournament?'tournament_submissions':'people_submissions')}>
             <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap'}}>
               <span style={{background:'#e0f2fe',color:'#0891b2',borderRadius:'6px',padding:'2px 10px',fontSize:'12px',fontWeight:600}}>
                 {(sub.people_type||sub.type)==='coach'?'Тренер':(sub.people_type||sub.type)==='school'?'Школа/секция':'Сбор/лагерь'}
@@ -826,7 +855,7 @@ export default function AdminPage() {
       {tab==='all_cards'&&(
         <div>
           <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
-            {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение'],['tournaments','Турниры']].map(([t,l])=>(
+            {[['offline','Офлайн сервисы'],['online','Онлайн сервисы'],['people','Люди и обучение']].map(([t,l])=>(
               <button key={t} onClick={()=>{setAllCardsTab(t);setAllCardsCat('')}} style={{padding:'8px 20px',borderRadius:'10px',border:'none',background:allCardsTab===t?'#475569':'#f1f5f9',color:allCardsTab===t?'white':'#64748b',fontWeight:600,cursor:'pointer'}}>{l}</button>
             ))}
           </div>
@@ -854,19 +883,9 @@ export default function AdminPage() {
               ))}
             </div>
           )}
-          {allCardsTab==='tournaments'&&(
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
-              {[['','Все']].map(([v,l])=>(
-                <button key={v} onClick={()=>setAllCardsCat(v)}
-                  style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-          )}
           {allCardsTab==='people'&&(
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
-              {[['','Все'],['coach','Тренеры'],['school','Школы'],['camp','Лагеря']].map(([v,l])=>(
+              {[['','Все'],['coach','Тренеры'],['school','Школы'],['camp','Лагеря'],['tournament','Турниры']].map(([v,l])=>(
                 <button key={v} onClick={()=>setAllCardsCat(v)}
                   style={{padding:'6px 14px',borderRadius:'8px',border:'none',background:allCardsCat===v?'#1d4ed8':'#f1f5f9',color:allCardsCat===v?'white':'#64748b',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
                   {l}
@@ -1026,64 +1045,9 @@ export default function AdminPage() {
             </div>
           )}
 
-          {allCardsTab==='tournaments'&&(
-            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              {allTournaments.filter(t=>{
-                const q = allCardsSearch.toLowerCase()
-                return !q || t.name?.toLowerCase().includes(q) || t.city?.name?.toLowerCase().includes(q)
-              }).map(t=>(
-                <div key={t.id} style={{border:'1px solid #e2e8f0',borderRadius:'12px',overflow:'hidden'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',background:'white'}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:600,fontSize:'15px'}}>{t.name}</div>
-                      <div style={{fontSize:'12px',color:'#94a3b8'}}>Турнир{t.city?' · '+t.city.name:''}</div>
-                      {t.phone&&<div style={{fontSize:'12px',color:'#64748b',marginTop:'2px'}}>📞 {t.phone}</div>}
-                    </div>
-                    <div style={{display:'flex',gap:'6px'}}>
-                      <button onClick={()=>setExpandedCard(expandedCard===('t'+t.id)?null:('t'+t.id))}
-                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'white',fontSize:'12px',cursor:'pointer',color:'#64748b'}}>
-                        {expandedCard===('t'+t.id)?'Скрыть':'Подробнее'}
-                      </button>
-                      <button onClick={async()=>{if(confirm('Удалить '+t.name+'?')){await sbDelete('tournaments',t.id);loadData()}}}
-                        style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #fca5a5',background:'white',fontSize:'12px',cursor:'pointer',color:'#dc2626'}}>
-                        Удалить
-                      </button>
-                    </div>
-                  </div>
-                  {expandedCard===('t'+t.id)&&(
-                    <div style={{borderTop:'1px solid #f1f5f9',padding:'12px 16px',background:'#f8fafc',fontSize:'13px',color:'#64748b',display:'flex',flexDirection:'column',gap:'8px'}}>
-                      <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8'}}>Публичная информация</div>
-                      <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
-                        {t.city&&<div>📍 {t.city.name}</div>}
-                        {(t.date_from||t.date_to)&&<div>📅 Даты: {t.date_from}{t.date_to?' — '+t.date_to:''}</div>}
-                        {t.format&&<div>🏒 Формат: {t.format}</div>}
-                        {t.age_from&&t.age_to&&<div>👶 Возраст: {t.age_from}–{t.age_to} лет</div>}
-                        {t.teams_count&&<div>👥 Команд: {t.teams_count}</div>}
-                        {t.price&&<div>💵 Стоимость: {t.price}</div>}
-                        {t.address&&<div>📍 Адрес: {t.address}</div>}
-                        {t.phone&&<div>📞 <a href={'tel:'+t.phone} style={{color:'#1d4ed8'}}>{t.phone}</a></div>}
-                        {t.telegram&&<div>💬 <a href={t.telegram.startsWith('http')?t.telegram:'https://t.me/'+t.telegram.replace('@','')} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{t.telegram}</a></div>}
-                        {t.website&&<div>🌐 <a href={t.website} target='_blank' rel='noreferrer' style={{color:'#1d4ed8'}}>{t.website}</a></div>}
-                        {t.description&&<div>📝 {t.description}</div>}
-                        {t.is_verified&&<div style={{color:'#16a34a',fontWeight:600}}>✓ Проверено</div>}
-                      </div>
-                      {(t.submitter_name||t.submitter_contact)&&(
-                        <div style={{borderTop:'1px solid #e2e8f0',paddingTop:'8px'}}>
-                          <div style={{fontSize:'10px',fontWeight:700,letterSpacing:'1px',textTransform:'uppercase',color:'#94a3b8',marginBottom:'4px'}}>Только для админа</div>
-                          <div style={{background:'#fef9c3',borderRadius:'8px',padding:'8px 12px',color:'#854d0e',fontSize:'12px'}}>
-                            👤 Заявитель: {t.submitter_name||'—'}{t.submitter_contact?' · '+t.submitter_contact:''}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
           {allCardsTab==='people'&&(
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              {[...allCoaches.map(c=>({...c,_type:'coach'})),...allSchools.map(s=>({...s,_type:'school'})),...allCamps.map(c=>({...c,_type:'camp'}))].filter(p=>{
+              {[...allCoaches.map(c=>({...c,_type:'coach'})),...allSchools.map(s=>({...s,_type:'school'})),...allCamps.map(c=>({...c,_type:'camp'})),...allTournaments.map(t=>({...t,_type:'tournament'}))].filter(p=>{
                 const q = allCardsSearch.toLowerCase()
                 const matchSearch = !q || p.name?.toLowerCase().includes(q) || p.city?.name?.toLowerCase().includes(q) || p.phone?.includes(q)
                 const matchCat = !allCardsCat || p._type===allCardsCat

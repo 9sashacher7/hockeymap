@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   const staticPages = [
-    { url: BASE_URL, priority: 1.0 },
+    { url: BASE_URL, priority: 1.0, changeFrequency: 'daily' as const },
     { url: `${BASE_URL}/add`, priority: 0.7 },
     { url: `${BASE_URL}/add-online`, priority: 0.7 },
     { url: `${BASE_URL}/add-people`, priority: 0.7 },
@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  const peopleSlugs = ['trenery','shkoly','sbory']
+  const peopleSlugs = ['trenery','shkoly','sbory','turniry']
   const peoplePages = peopleSlugs.map(slug => ({
     url: `${BASE_URL}/people/${slug}`,
     priority: 0.8,
