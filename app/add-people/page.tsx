@@ -12,7 +12,7 @@ async function sq(table: string, params = '') {
   return res.json()
 }
 
-async function post(table, data) {
+async function post(table: string, data: any) {
   const res = await fetch(`${SURL}/rest/v1/${table}`, {
     method: 'POST',
     headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
