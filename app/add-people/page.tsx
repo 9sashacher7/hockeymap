@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-const SURL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SKEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SURL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SKEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 async function sq(table: string, params = '') {
   const res = await fetch(`${SURL}/rest/v1/${table}?${params}`, {
