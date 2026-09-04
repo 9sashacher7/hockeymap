@@ -7,7 +7,7 @@ const SKEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 async function sq(table: string, params = '') {
   const res = await fetch(`${SURL}/rest/v1/${table}?${params}`, {
-    headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}` }
+    headers: { apikey: SKEY!, Authorization: `Bearer ${SKEY!}` }
   })
   return res.json()
 }
