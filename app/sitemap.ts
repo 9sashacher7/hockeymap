@@ -1,18 +1,24 @@
 import { MetadataRoute } from 'next'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 const BASE_URL = 'https://hockeymap.ru'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: cities }, { data: categories }] = await Promise.all([
-    supabase.from('cities').select('slug'),
-    supabase.from('categories').select('slug'),
-  ])
+  const SURL = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const SKEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  let cities: any[] = []
+  let categories: any[] = []
+  
+  try {
+    const [citiesRes, catsRes] = await Promise.all([
+      fetch(`${SURL}/rest/v1/cities?select=slug`, { headers: { apikey: SKEY!, Authorization: `Bearer ${SKEY!}` } }),
+      fetch(`${SURL}/rest/v1/categories?select=slug`, { headers: { apikey: SKEY!, Authorization: `Bearer ${SKEY!}` } }),
+    ])
+    cities = await citiesRes.json()
+    categories = await catsRes.json()
+  } catch(e) {
+    console.error('Sitemap fetch error:', e)
+  }
 
   const staticPages = [
     { url: BASE_URL, priority: 1.0, changeFrequency: 'daily' as const },
@@ -25,12 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/privacy`, priority: 0.3 },
   ]
 
-  const categoryPages = (categories ?? []).map(c => ({
+  const categoryPages = (Array.isArray(categories) ? categories : []).map(c => ({
     url: `${BASE_URL}/category/${c.slug}`,
     priority: 0.9,
   }))
 
-  const cityPages = (cities ?? []).map(c => ({
+  const cityPages = (Array.isArray(cities) ? cities : []).map(c => ({
     url: `${BASE_URL}/city/${c.slug}`,
     priority: 0.8,
   }))
